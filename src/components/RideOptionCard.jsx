@@ -78,7 +78,7 @@ export default function RideOptionCard({
             <SplitPrice
               low={priceLow}
               high={priceHigh}
-              className="font-display text-lg font-semibold text-paper"
+              className="font-sans text-lg font-semibold tabular-nums text-paper"
               centsClassName="text-sm font-normal text-paper-dim"
             />
             <span
@@ -141,7 +141,7 @@ export default function RideOptionCard({
                         <SplitPrice
                           low={tier.priceLow}
                           high={tier.priceHigh}
-                          className="block font-display text-sm font-semibold text-paper"
+                          className="block font-sans text-sm font-semibold tabular-nums text-paper"
                           centsClassName="text-xs font-normal text-paper-dim"
                         />
                         <span className="block text-xs text-paper-faint">

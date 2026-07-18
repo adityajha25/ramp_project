@@ -15,7 +15,7 @@ function SavingsBanner({ quotes, recommendedQuote }) {
   }
 
   return (
-    <div className="animate-rise-in flex items-center gap-2 rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 text-sm font-medium text-accent">
+    <div className="animate-rise-in flex items-center gap-2 rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 font-sans text-sm font-medium tabular-nums text-accent">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0-6 6m6-6 6 6" />
       </svg>

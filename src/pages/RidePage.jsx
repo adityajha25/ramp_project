@@ -372,7 +372,9 @@ export default function RidePage({ ride }) {
                       className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-[#ff8a5c]"
                     >
                       Start trip · {focusedItinerary.label} ·{' '}
-                      {formatAveragePrice(focusedItinerary.costLow, focusedItinerary.costHigh)}
+                      <span className="font-sans tabular-nums">
+                        {formatAveragePrice(focusedItinerary.costLow, focusedItinerary.costHigh)}
+                      </span>
                     </button>
                   ) : (
                     <button
@@ -380,9 +382,21 @@ export default function RidePage({ ride }) {
                       onClick={handleBook}
                       className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-[#ff8a5c]"
                     >
-                      {isOwnCarSelected
-                        ? `Get directions · ${formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.`
-                        : `Book ${bookingQuote.providerName} · ${formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh)}`}
+                      {isOwnCarSelected ? (
+                        <>
+                          Get directions ·{' '}
+                          <span className="font-sans tabular-nums">
+                            {formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          Book {bookingQuote.providerName} ·{' '}
+                          <span className="font-sans tabular-nums">
+                            {formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh)}
+                          </span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>

@@ -71,7 +71,7 @@ function LegRow({ leg }) {
       <span className="mt-0.5"><LegIcon leg={leg} /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-paper">{description}</span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-paper-faint">
+          <span className="mt-0.5 flex flex-wrap items-center gap-2 font-sans text-xs tabular-nums text-paper-faint">
           <span>{formatDuration(leg.minutes)}</span>
           {leg.mode === 'subway' && leg.headwayMinutes ? (
             <>
@@ -163,7 +163,7 @@ function SplitPrice({ low, high }) {
   const cents = formatted.slice(-3);
 
   return (
-    <p className="shrink-0 font-display text-base font-semibold text-paper">
+    <p className="shrink-0 font-sans text-base font-semibold tabular-nums text-paper">
       {whole}
       <span className="text-sm font-normal text-paper-dim">{cents}</span>
     </p>
@@ -191,7 +191,7 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-display text-sm font-semibold text-paper">{itinerary.label}</h3>
               {showSavings ? (
-                <span className="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-accent">
+                <span className="rounded-full bg-accent/15 px-2 py-0.5 font-sans text-[10px] font-bold tabular-nums uppercase tracking-wide text-accent">
                   Save {formatCurrency(itinerary.savingsVsDirect)}
                 </span>
               ) : null}
@@ -267,7 +267,7 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
                     <span className="mt-1 block text-xs text-paper-faint">{step.paymentNote}</span>
                   ) : null}
                   {step.detail ? (
-                    <span className="mt-0.5 block text-xs text-paper-faint">{step.detail}</span>
+                    <span className="mt-0.5 block font-sans text-xs tabular-nums text-paper-faint">{step.detail}</span>
                   ) : null}
                 </span>
               </li>

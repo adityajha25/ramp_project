@@ -112,7 +112,7 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
       {isCompleted && fareLabel ? (
         <div className="surface-card animate-rise-in flex items-center justify-between rounded-2xl p-4">
           <span className="text-sm text-paper-dim">Trip total</span>
-          <span className="font-mono text-lg font-bold text-paper">{fareLabel}</span>
+          <span className="font-sans text-lg font-bold tabular-nums text-paper">{fareLabel}</span>
         </div>
       ) : null}
 

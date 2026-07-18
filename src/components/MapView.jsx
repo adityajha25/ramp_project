@@ -2,56 +2,96 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { NYC_CENTER, DEFAULT_MAP_ZOOM } from '../constants/nyc.js';
 import { reverseGeocode } from '../services/geocoding.js';
-import { fetchDrivingRoute } from '../services/directions.js';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-const ROUTE_SOURCE = 'trip-route';
-const ROUTE_LAYER = 'trip-route-line';
+const ROUTE_SOURCE_ID = 'trip-route';
+const EMPTY_ROUTE = { type: 'FeatureCollection', features: [] };
 
-function ensureRouteLayer(map) {
-  if (map.getSource(ROUTE_SOURCE)) {
+function removeLegacyRouteLayers(map) {
+  ['trip-route-line', 'trip-route-casing', 'trip-route-solid', 'trip-route-dashed'].forEach((id) => {
+    if (map.getLayer(id)) {
+      map.removeLayer(id);
+    }
+  });
+  if (map.getSource(ROUTE_SOURCE_ID)) {
+    map.removeSource(ROUTE_SOURCE_ID);
+  }
+}
+
+/** Multi-color route layers: solid lines use feature `color`, walks use dashed gray. */
+function ensureColoredRouteLayers(map) {
+  if (map.getSource(ROUTE_SOURCE_ID)) {
     return;
   }
 
-  map.addSource(ROUTE_SOURCE, {
+  map.addSource(ROUTE_SOURCE_ID, {
     type: 'geojson',
-    data: {
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: [] },
-      properties: {},
+    data: EMPTY_ROUTE,
+  });
+
+  map.addLayer({
+    id: 'trip-route-casing',
+    type: 'line',
+    source: ROUTE_SOURCE_ID,
+    filter: ['!=', ['get', 'dashed'], true],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#F6F2E9', 'line-width': 9, 'line-opacity': 0.18 },
+  });
+
+  map.addLayer({
+    id: 'trip-route-solid',
+    type: 'line',
+    source: ROUTE_SOURCE_ID,
+    filter: ['!=', ['get', 'dashed'], true],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': ['coalesce', ['get', 'color'], '#5B8CFF'],
+      'line-width': 4.5,
+      'line-opacity': 0.95,
     },
   });
 
   map.addLayer({
-    id: ROUTE_LAYER,
+    id: 'trip-route-dashed',
     type: 'line',
-    source: ROUTE_SOURCE,
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
+    source: ROUTE_SOURCE_ID,
+    filter: ['==', ['get', 'dashed'], true],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': '#5B8CFF',
-      'line-width': 4,
-      'line-opacity': 0.9,
+      'line-color': ['coalesce', ['get', 'color'], '#6b7280'],
+      'line-width': 3,
+      'line-dasharray': [0.2, 2],
     },
   });
 }
 
-function setRouteCoordinates(map, coordinates) {
-  const source = map.getSource(ROUTE_SOURCE);
-  if (!source) {
-    return;
+function setRouteData(map, geoJson) {
+  removeLegacyRouteLayers(map);
+  ensureColoredRouteLayers(map);
+  map.getSource(ROUTE_SOURCE_ID).setData(geoJson ?? EMPTY_ROUTE);
+}
+
+function fitRouteBounds(map, geoJson, pickup, dropoff) {
+  const bounds = new mapboxgl.LngLatBounds();
+
+  if (geoJson?.features?.length) {
+    for (const feature of geoJson.features) {
+      for (const coordinate of feature.geometry.coordinates) {
+        bounds.extend(coordinate);
+      }
+    }
+  } else {
+    if (pickup) {
+      bounds.extend([pickup.lng, pickup.lat]);
+    }
+    if (dropoff) {
+      bounds.extend([dropoff.lng, dropoff.lat]);
+    }
   }
 
-  source.setData({
-    type: 'Feature',
-    geometry: {
-      type: 'LineString',
-      coordinates: coordinates || [],
-    },
-    properties: {},
-  });
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds, { padding: 70, maxZoom: 14 });
+  }
 }
 
 export default function MapView({
@@ -66,7 +106,6 @@ export default function MapView({
   const mapRef = useRef(null);
   const markersRef = useRef({ pickup: null, dropoff: null });
   const clickModeRef = useRef('pickup');
-  const routeRequestId = useRef(0);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -85,7 +124,7 @@ export default function MapView({
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'top-right');
 
     map.on('load', () => {
-      ensureRouteLayer(map);
+      ensureColoredRouteLayers(map);
     });
 
     map.on('click', async (event) => {
@@ -114,6 +153,7 @@ export default function MapView({
     };
   }, [onPickupChange, onDropoffChange]);
 
+  // Pickup / dropoff markers and bounds only — route colors come from routeGeoJson.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {
@@ -142,41 +182,6 @@ export default function MapView({
     renderMarker('pickup', pickup, '#2FE6A8');
     renderMarker('dropoff', dropoff, '#5B8CFF');
 
-    const requestId = ++routeRequestId.current;
-
-    const updateRoute = async () => {
-      if (!pickup || !dropoff) {
-        if (map.isStyleLoaded()) {
-          ensureRouteLayer(map);
-          setRouteCoordinates(map, []);
-        }
-        return;
-      }
-
-      const coordinates = await fetchDrivingRoute(pickup, dropoff);
-      if (requestId !== routeRequestId.current || !mapRef.current) {
-        return;
-      }
-
-      const apply = () => {
-        ensureRouteLayer(map);
-        setRouteCoordinates(map, coordinates);
-      };
-
-      if (map.isStyleLoaded()) {
-        apply();
-      } else {
-        map.once('load', apply);
-      }
-
-      const bounds = new mapboxgl.LngLatBounds();
-      bounds.extend([pickup.lng, pickup.lat]);
-      bounds.extend([dropoff.lng, dropoff.lat]);
-      map.fitBounds(bounds, { padding: 80, maxZoom: 13 });
-    };
-
-    updateRoute();
-
     if (pickup && !dropoff) {
       map.flyTo({ center: [pickup.lng, pickup.lat], zoom: 13 });
     } else if (dropoff && !pickup) {
@@ -186,62 +191,16 @@ export default function MapView({
     return undefined;
   }, [pickup, dropoff]);
 
-  // Draw the selected route (direct ride or multi-leg smart itinerary).
+  // Draw selected route with per-leg colors (rideshare brand, MTA line, dashed walk).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {
       return undefined;
     }
 
-    const emptyCollection = { type: 'FeatureCollection', features: [] };
-
     const apply = () => {
-      const data = routeGeoJson ?? emptyCollection;
-      const source = map.getSource('trip-route');
-
-      if (source) {
-        source.setData(data);
-      } else {
-        map.addSource('trip-route', { type: 'geojson', data });
-        map.addLayer({
-          id: 'trip-route-casing',
-          type: 'line',
-          source: 'trip-route',
-          filter: ['!=', ['get', 'dashed'], true],
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': '#F6F2E9', 'line-width': 9, 'line-opacity': 0.18 },
-        });
-        map.addLayer({
-          id: 'trip-route-solid',
-          type: 'line',
-          source: 'trip-route',
-          filter: ['!=', ['get', 'dashed'], true],
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': ['get', 'color'], 'line-width': 4.5, 'line-opacity': 0.95 },
-        });
-        map.addLayer({
-          id: 'trip-route-dashed',
-          type: 'line',
-          source: 'trip-route',
-          filter: ['==', ['get', 'dashed'], true],
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-color': ['get', 'color'],
-            'line-width': 3,
-            'line-dasharray': [0.2, 2],
-          },
-        });
-      }
-
-      if (routeGeoJson?.features?.length) {
-        const bounds = new mapboxgl.LngLatBounds();
-        for (const feature of routeGeoJson.features) {
-          for (const coordinate of feature.geometry.coordinates) {
-            bounds.extend(coordinate);
-          }
-        }
-        map.fitBounds(bounds, { padding: 70, maxZoom: 14 });
-      }
+      setRouteData(map, routeGeoJson);
+      fitRouteBounds(map, routeGeoJson, pickup, dropoff);
     };
 
     if (map.isStyleLoaded()) {
@@ -253,7 +212,7 @@ export default function MapView({
     return () => {
       map.off('load', apply);
     };
-  }, [routeGeoJson]);
+  }, [routeGeoJson, pickup, dropoff]);
 
   return (
     <div className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-surface-hair shadow-card'}`}>

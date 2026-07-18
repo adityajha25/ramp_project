@@ -80,7 +80,7 @@ function buildAccessLeg(point, pointLabel, station, direction) {
     : buildRideLeg(station, point, station.name, pointLabel);
 }
 
-function summarizeItinerary(legs) {
+function summarizeItinerary(legs, departAt) {
   const totalMinutes = legs.reduce((sum, leg) => sum + leg.minutes, 0);
   const costLow = legs.reduce((sum, leg) => sum + leg.costLow, 0);
   const costHigh = legs.reduce((sum, leg) => sum + leg.costHigh, 0);
@@ -99,6 +99,7 @@ function summarizeItinerary(legs) {
     totalMinutes: Math.round(totalMinutes),
     costLow: Number(costLow.toFixed(2)),
     costHigh: Number(costHigh.toFixed(2)),
+    departAt: departAt.toISOString(),
   };
 }
 
@@ -109,7 +110,7 @@ function summarizeItinerary(legs) {
  * @param dropoff {lat, lng, label}
  * @param directQuotes quotes from fetchRideQuotes for the direct trip
  */
-export function buildSmartItineraries({ pickup, dropoff, directQuotes }) {
+export function buildSmartItineraries({ pickup, dropoff, directQuotes, departAt = new Date() }) {
   const tripMiles = distanceInMiles(pickup, dropoff);
   if (tripMiles < MIN_TRIP_MILES_FOR_TRANSIT) {
     return [];
@@ -134,7 +135,7 @@ export function buildSmartItineraries({ pickup, dropoff, directQuotes }) {
         continue;
       }
 
-      const transit = routeBetweenStations(origin.id, dest.id);
+      const transit = routeBetweenStations(origin.id, dest.id, departAt);
       if (!transit || transit.segments.length === 0) {
         continue;
       }
@@ -145,7 +146,7 @@ export function buildSmartItineraries({ pickup, dropoff, directQuotes }) {
         buildAccessLeg(dropoff, dropoffLabel, dest, 'egress'),
       ];
 
-      const itinerary = summarizeItinerary(legs);
+      const itinerary = summarizeItinerary(legs, departAt);
       if (!seen.has(itinerary.id)) {
         seen.add(itinerary.id);
         candidates.push(itinerary);

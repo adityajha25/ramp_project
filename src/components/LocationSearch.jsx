@@ -1,6 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
 import { geocodeAddress } from '../services/geocoding.js';
 
+function ResultRow({ result, onSelect }) {
+  const isLandmark = result.kind === 'landmark';
+  const isPoi = result.kind === 'poi';
+
+  return (
+    <button
+      type="button"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => onSelect(result)}
+      className="flex w-full items-start gap-2 px-3 py-2.5 text-left transition hover:bg-paper/[0.06]"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium text-paper">
+            {result.shortLabel || result.label.split(',')[0]}
+          </span>
+          {isLandmark ? (
+            <span className="shrink-0 rounded-full bg-brand-light px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+              Landmark
+            </span>
+          ) : isPoi ? (
+            <span className="shrink-0 rounded-full bg-surface-raised px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-paper-faint">
+              Place
+            </span>
+          ) : null}
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-paper-faint">{result.label}</span>
+      </span>
+    </button>
+  );
+}
+
 function SearchField({ value, placeholder, onSelect, marker }) {
   const [query, setQuery] = useState(value?.label || '');
   const [results, setResults] = useState([]);
@@ -77,7 +109,7 @@ function SearchField({ value, placeholder, onSelect, marker }) {
       {showDropdown ? (
         <div className="glass-strong absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl">
           {isSearching ? (
-            <p className="px-3 py-2 font-mono text-xs text-paper-faint">Searching NYC addresses…</p>
+            <p className="px-3 py-2 font-mono text-xs text-paper-faint">Searching landmarks &amp; places…</p>
           ) : null}
 
           {searchError ? (
@@ -88,17 +120,14 @@ function SearchField({ value, placeholder, onSelect, marker }) {
             <ul>
               {results.map((result) => (
                 <li key={result.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelect(result);
-                      setQuery(result.label);
+                  <ResultRow
+                    result={result}
+                    onSelect={(selected) => {
+                      onSelect(selected);
+                      setQuery(selected.label);
                       setResults([]);
                     }}
-                    className="block w-full px-3 py-2.5 text-left text-sm text-paper-dim transition hover:bg-paper/[0.06] hover:text-paper"
-                  >
-                    {result.label}
-                  </button>
+                  />
                 </li>
               ))}
             </ul>
@@ -116,6 +145,7 @@ export default function LocationSearch({
   onDropoffChange,
   onCompare,
   isLoading,
+  timingSelector,
 }) {
   const canCompare = Boolean(pickup && dropoff);
 
@@ -123,17 +153,19 @@ export default function LocationSearch({
     <div className="space-y-2.5">
       <SearchField
         value={pickup}
-        placeholder="Pickup location"
+        placeholder="Pickup — address or landmark"
         onSelect={onPickupChange}
         marker={<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent shadow-[0_0_0_3px_rgba(47,230,168,0.15)]" />}
       />
 
       <SearchField
         value={dropoff}
-        placeholder="Where to?"
+        placeholder="Where to? — JFK, Empire State, etc."
         onSelect={onDropoffChange}
         marker={<span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-brand shadow-[0_0_0_3px_rgba(91,140,255,0.15)]" />}
       />
+
+      {timingSelector ? <div className="pt-1">{timingSelector}</div> : null}
 
       <button
         type="button"

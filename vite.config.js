@@ -2,29 +2,35 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { handleParseTripRequest } from './api/_lib/parseTripWithOpenAI.js';
+import { handleTranscribeRequest } from './api/_lib/transcribeWithWhisper.js';
 
-function parseTripApiPlugin(apiKey) {
+function openaiApiPlugin(apiKey) {
   return {
-    name: 'parse-trip-api',
+    name: 'openai-api',
     configureServer(server) {
-      server.middlewares.use('/api/parse-trip', (req, res, next) => {
-        if (req.method === 'OPTIONS') {
-          res.statusCode = 204;
-          res.end();
-          return;
-        }
+      const mount = (path, handler) => {
+        server.middlewares.use(path, (req, res, next) => {
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
 
-        if (req.method !== 'POST') {
-          next();
-          return;
-        }
+          if (req.method !== 'POST') {
+            next();
+            return;
+          }
 
-        handleParseTripRequest(req, res, apiKey).catch((error) => {
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: error?.message || 'Server error' }));
+          handler(req, res, apiKey).catch((error) => {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: error?.message || 'Server error' }));
+          });
         });
-      });
+      };
+
+      mount('/api/parse-trip', handleParseTripRequest);
+      mount('/api/transcribe', handleTranscribeRequest);
     },
   };
 }
@@ -45,7 +51,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      parseTripApiPlugin(env.OPENAI_API_KEY),
+      openaiApiPlugin(env.OPENAI_API_KEY),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'icons/*.png', 'logo.png'],

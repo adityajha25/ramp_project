@@ -8,10 +8,10 @@ const DEMO_PICKUP = {
 };
 
 /**
- * Resolve the user's GPS position as a pickup place.
+ * Resolve the user's GPS position as a place.
  * Falls back to a Times Square demo pin if permission is denied or outside NYC.
  */
-export async function getCurrentPickup() {
+export async function getCurrentLocation() {
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
     return { ...DEMO_PICKUP, isDemo: true };
   }
@@ -42,4 +42,9 @@ export async function getCurrentPickup() {
   } catch {
     return { ...DEMO_PICKUP, isDemo: true };
   }
+}
+
+/** @deprecated Prefer getCurrentLocation */
+export async function getCurrentPickup() {
+  return getCurrentLocation();
 }

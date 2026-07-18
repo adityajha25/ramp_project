@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import LocationSearch from '../components/LocationSearch.jsx';
 import TripTimingSelector from '../components/TripTimingSelector.jsx';
 import { DEMO_ROUTES } from '../constants/nyc.js';
+import { useVoiceDictation } from '../hooks/useVoiceDictation.js';
 
 const TABS = [
   { id: 'manual', label: 'Book a ride' },
@@ -16,14 +17,59 @@ const AGENT_EXAMPLES = [
   'from Williamsburg to SoHo, best value',
 ];
 
+function MicIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 1.5a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0v-6a3 3 0 0 1 3-3Z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19.5 10.5a7.5 7.5 0 0 1-15 0M12 18.75v3.75M8.25 22.5h7.5"
+      />
+    </svg>
+  );
+}
+
 function AgentModePanel({ onSubmit, isLoading, error }) {
   const [prompt, setPrompt] = useState('');
+
+  const handleVoiceDone = useCallback(
+    async (finalPrompt) => {
+      const trimmed = finalPrompt.trim();
+      if (trimmed) {
+        await onSubmit(trimmed);
+      }
+    },
+    [onSubmit]
+  );
+
+  const { isListening, isTranscribing, voiceError, toggleListening } = useVoiceDictation({
+    prompt,
+    setPrompt,
+    disabled: isLoading,
+    onStopCallback: handleVoiceDone,
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!prompt.trim() || isLoading) return;
     await onSubmit(prompt.trim());
   };
+
+  const handleVoiceToggle = async () => {
+    if (isListening) {
+      // Stop → will call onStopCallback with the current prompt
+      await toggleListening();
+    } else {
+      await toggleListening();
+    }
+  };
+
+  const displayError = voiceError || error;
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,24 +83,64 @@ function AgentModePanel({ onSubmit, isLoading, error }) {
             />
           </svg>
         </div>
-        <div>
-          <p className="text-base font-semibold text-ink">Agent mode</p>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-base font-semibold text-ink">Agent mode</p>
+            {isListening && (
+              <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                Listening…
+              </span>
+            )}
+            {isTranscribing && !isListening && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                Transcribing…
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-gray-500">
-            Describe your trip in plain English — &ldquo;fastest ride to LaGuardia&rdquo; — and we&apos;ll
-            open the map with your pickup, destination, and ranked prices.
+            Describe your trip in plain English or tap the mic to speak — then we&apos;ll rank your best
+            rides.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <textarea
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          rows={3}
-          placeholder="Where do you want to go?"
-          disabled={isLoading}
-          className="w-full resize-none rounded-xl border border-white/60 bg-white/55 px-3 py-2.5 text-sm text-ink backdrop-blur-sm placeholder:text-gray-400 focus:bg-white/85 focus:outline-none focus:ring-2 focus:ring-brand/50 disabled:opacity-60"
-        />
+        {/* Text area + voice button row */}
+        <div className="relative">
+          <textarea
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            rows={3}
+            placeholder={isListening ? 'Listening — speak now…' : 'Where do you want to go?'}
+            disabled={isLoading}
+            className={`w-full resize-none rounded-xl border bg-white/55 px-3 py-2.5 pr-14 text-sm text-ink backdrop-blur-sm placeholder:text-gray-400 focus:bg-white/85 focus:outline-none focus:ring-2 disabled:opacity-60 ${
+              isListening
+                ? 'border-red-400 focus:ring-red-400/50'
+                : 'border-white/60 focus:ring-brand/50'
+            }`}
+          />
+
+          {/* Voice toggle button — floated inside the textarea */}
+          <button
+            id="voice-toggle-btn"
+            type="button"
+            onClick={handleVoiceToggle}
+            disabled={isLoading}
+            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            title={isListening ? 'Stop recording' : 'Speak your trip'}
+            className={`absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-40 ${
+              isListening
+                ? 'bg-red-500 text-white shadow-red-300 hover:bg-red-600 focus:ring-red-400 animate-pulse'
+                : 'border border-gray-200 bg-white text-gray-500 hover:border-brand hover:text-brand focus:ring-brand/50'
+            }`}
+          >
+            <MicIcon className="h-4 w-4" />
+          </button>
+        </div>
 
         <button
           type="submit"
@@ -65,28 +151,30 @@ function AgentModePanel({ onSubmit, isLoading, error }) {
         </button>
       </form>
 
-      {error ? (
+      {displayError ? (
         <p className="rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 text-sm text-red-600">
-          {error}
+          {displayError}
         </p>
       ) : null}
 
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Try an example</p>
-        <div className="flex flex-wrap gap-2">
-          {AGENT_EXAMPLES.map((example) => (
-            <button
-              key={example}
-              type="button"
-              disabled={isLoading}
-              onClick={() => setPrompt(example)}
-              className="rounded-full border border-white/70 bg-white/50 px-3 py-1.5 text-left text-xs font-medium text-gray-600 backdrop-blur-sm transition hover:border-brand hover:text-brand disabled:opacity-50"
-            >
-              {example}
-            </button>
-          ))}
+      {!isListening && (
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Try an example</p>
+          <div className="flex flex-wrap gap-2">
+            {AGENT_EXAMPLES.map((example) => (
+              <button
+                key={example}
+                type="button"
+                disabled={isLoading}
+                onClick={() => setPrompt(example)}
+                className="rounded-full border border-white/70 bg-white/50 px-3 py-1.5 text-left text-xs font-medium text-gray-600 backdrop-blur-sm transition hover:border-brand hover:text-brand disabled:opacity-50"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

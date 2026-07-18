@@ -9,7 +9,7 @@ import { isWithinNYCServiceArea } from '../constants/nyc.js';
 import { PERSONAL_CAR } from '../constants/providers.js';
 import { geocodeAddress } from '../services/geocoding.js';
 import { parseTripIntent } from '../services/tripIntent.js';
-import { getCurrentPickup } from '../services/currentLocation.js';
+import { getCurrentLocation } from '../services/currentLocation.js';
 import { annotateArriveBy } from '../services/agentPicks.js';
 import {
   DEFAULT_TRIP_TIMING,
@@ -177,7 +177,7 @@ export function useRideComparison() {
       const resolvedDropoff = await resolvePlace(intent.dropoffQuery);
       const resolvedPickup = intent.pickupQuery
         ? await resolvePlace(intent.pickupQuery)
-        : await getCurrentPickup();
+        : await getCurrentLocation();
 
       if (!isWithinNYCServiceArea(resolvedPickup) || !isWithinNYCServiceArea(resolvedDropoff)) {
         throw new Error('OneRide MVP is limited to NYC and surrounding areas.');

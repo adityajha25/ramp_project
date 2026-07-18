@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { geocodeAddress } from '../services/geocoding.js';
+import { getCurrentLocation } from '../services/currentLocation.js';
 
 function ResultRow({ result, onSelect }) {
   const isLandmark = result.kind === 'landmark';
@@ -39,6 +40,7 @@ function SearchField({ value, placeholder, onSelect, marker }) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +72,26 @@ function SearchField({ value, placeholder, onSelect, marker }) {
     return () => window.clearTimeout(debounceRef.current);
   }, [query, value]);
 
+  const handleUseCurrentLocation = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isLocating) return;
+
+    setIsLocating(true);
+    setSearchError(null);
+    setResults([]);
+
+    try {
+      const location = await getCurrentLocation();
+      onSelect(location);
+      setQuery(location.label);
+    } catch (error) {
+      setSearchError(error.message || 'Unable to get current location.');
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   const showDropdown = isFocused && (results.length > 0 || isSearching || searchError);
 
   const handleClear = () => {
@@ -80,7 +102,7 @@ function SearchField({ value, placeholder, onSelect, marker }) {
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-3 rounded-xl border border-white/60 bg-white/55 px-3 backdrop-blur-sm transition focus-within:bg-white/85 focus-within:ring-2 focus-within:ring-brand/50">
+      <div className="flex items-center gap-2 rounded-xl border border-white/60 bg-white/55 px-3 backdrop-blur-sm transition focus-within:bg-white/85 focus-within:ring-2 focus-within:ring-brand/50">
         {marker}
         <input
           type="text"
@@ -89,8 +111,18 @@ function SearchField({ value, placeholder, onSelect, marker }) {
           onFocus={() => setIsFocused(true)}
           onBlur={() => window.setTimeout(() => setIsFocused(false), 150)}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 text-sm font-medium text-ink outline-none placeholder:font-normal placeholder:text-gray-400"
+          className="min-w-0 flex-1 bg-transparent py-3 text-sm font-medium text-ink outline-none placeholder:font-normal placeholder:text-gray-400"
         />
+
+        <button
+          type="button"
+          onClick={handleUseCurrentLocation}
+          disabled={isLocating}
+          title="Use current location"
+          className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-white/70 disabled:cursor-wait disabled:opacity-60"
+        >
+          {isLocating ? 'Locating…' : 'Current Location'}
+        </button>
 
         {query ? (
           <button

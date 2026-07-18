@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ProviderLogo from './ProviderLogo.jsx';
 import { formatAveragePrice, formatDuration } from '../utils/formatters.js';
 
 export default function RideOptionCard({
@@ -27,12 +28,7 @@ export default function RideOptionCard({
       <button type="button" onClick={onSelect} className="w-full p-4 text-left">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: quote.brandColor, color: quote.accentColor }}
-            >
-              {quote.providerName.charAt(0)}
-            </span>
+            <ProviderLogo providerId={quote.providerId} size={40} />
 
             <div>
               <div className="flex items-center gap-2">

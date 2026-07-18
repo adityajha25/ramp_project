@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import LocationSearch from '../components/LocationSearch.jsx';
+import TripTimingSelector from '../components/TripTimingSelector.jsx';
 import { DEMO_ROUTES } from '../constants/nyc.js';
 
 const TABS = [
@@ -102,6 +103,8 @@ export default function HomePage({ ride }) {
     compareRoute,
     loadDemoRoute,
     runAgentTrip,
+    tripTiming,
+    setTripTiming,
     isLoading,
     error,
     setError,
@@ -179,6 +182,9 @@ export default function HomePage({ ride }) {
                   onDropoffChange={setDropoff}
                   onCompare={handleSeePrices}
                   isLoading={isLoading}
+                  timingSelector={
+                    <TripTimingSelector timing={tripTiming} onChange={setTripTiming} />
+                  }
                 />
 
                 {error ? (

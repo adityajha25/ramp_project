@@ -1,54 +1,51 @@
 import { useState } from 'react';
-import { formatAveragePrice, formatCurrency, formatDuration } from '../utils/formatters.js';
+import ProviderLogo, { MtaLineBullet, MtaSubwayLogo } from './ProviderLogo.jsx';
+import { formatAveragePrice, formatCurrency, formatDuration, formatTime } from '../utils/formatters.js';
 
-function LegIcon({ mode }) {
-  if (mode === 'walk') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-        <circle cx="12" cy="5" r="2" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5 10 13l-2.5 6M12 7.5l2 4 3 1.5M10 13l3 2 1 5" />
-      </svg>
-    );
-  }
+const MTA_PAYMENT_NOTE =
+  'Pay $2.90 with OMNY — tap phone/card at the turnstile, or buy at a station vending machine.';
 
-  if (mode === 'ride') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11M5 11h14M5 11a2 2 0 0 0-2 2v3h2m14-5a2 2 0 0 1 2 2v3h-2m-12 0a1.5 1.5 0 1 1-3 0m15 0a1.5 1.5 0 1 1-3 0" />
-      </svg>
-    );
-  }
-
+function LiveHeadway({ minutes }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-      <rect x="6" y="3" width="12" height="14" rx="2.5" />
-      <path strokeLinecap="round" d="M6 11h12M9.5 17 8 20m6.5-3 1.5 3M9.5 14h.01M14.5 14h.01" />
-    </svg>
-  );
-}
-
-function LineBullet({ segment }) {
-  return (
-    <span
-      className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold"
-      style={{ backgroundColor: segment.color, color: segment.textColor }}
-    >
-      {segment.lineName}
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-accent-dark">
+      <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
+        <circle cx="8" cy="8" r="3" opacity="0.9" />
+        <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+      </svg>
+      Runs every ~{minutes} min · live
     </span>
   );
 }
 
-function SubwayBullets({ segments }) {
-  return (
-    <span className="inline-flex items-center gap-1">
-      {segments.map((segment, index) => (
-        <span key={`${segment.lineId}-${index}`} className="inline-flex items-center gap-1">
-          {index > 0 ? <span className="text-gray-300">→</span> : null}
-          <LineBullet segment={segment} />
-        </span>
-      ))}
-    </span>
-  );
+function LegIcon({ leg }) {
+  if (leg.mode === 'walk') {
+    return (
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-400 text-white">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-3.5 w-3.5">
+          <circle cx="12" cy="5" r="2" />
+          <path strokeLinecap="round" d="M12 7.5 10 13l-2.5 6M12 7.5l2 4 3 1.5" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (leg.mode === 'ride') {
+    return <ProviderLogo providerId={leg.providerId} size={24} className="shrink-0" />;
+  }
+
+  const segment = leg.segments?.[0];
+  if (segment) {
+    return (
+      <MtaLineBullet
+        lineName={segment.lineName}
+        color={segment.color}
+        textColor={segment.textColor}
+        size={24}
+      />
+    );
+  }
+
+  return <MtaSubwayLogo size={24} className="shrink-0" />;
 }
 
 function LegRow({ leg }) {
@@ -71,22 +68,22 @@ function LegRow({ leg }) {
 
   return (
     <li className="flex items-start gap-2.5">
-      <span
-        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white"
-        style={{
-          backgroundColor:
-            leg.mode === 'walk' ? '#9ca3af' : leg.mode === 'ride' ? leg.brandColor : '#1f2937',
-        }}
-      >
-        <LegIcon mode={leg.mode} />
-      </span>
+      <span className="mt-0.5"><LegIcon leg={leg} /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-ink">{description}</span>
-        <span className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+        <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
           <span>{formatDuration(leg.minutes)}</span>
-          <span>·</span>
-          {leg.mode === 'subway' ? <SubwayBullets segments={leg.segments} /> : <span>{detail}</span>}
-          {leg.mode === 'subway' ? <span className="text-gray-400">{detail}</span> : null}
+          {leg.mode === 'subway' && leg.headwayMinutes ? (
+            <>
+              <span>·</span>
+              <LiveHeadway minutes={leg.headwayMinutes} />
+            </>
+          ) : (
+            <>
+              <span>·</span>
+              <span>{detail}</span>
+            </>
+          )}
         </span>
       </span>
     </li>
@@ -94,40 +91,60 @@ function LegRow({ leg }) {
 }
 
 /**
- * Turn-by-turn style steps, like Apple/Google transit directions.
- * Boarding, riding, getting off, and each transfer are separate steps.
+ * Turn-by-turn steps with scheduled times, like Apple/Google transit.
  */
 function buildDetailedSteps(itinerary) {
   const steps = [];
+  let cursor = new Date(itinerary.departAt || Date.now());
+  let showedMtaPayment = false;
 
   for (const leg of itinerary.legs) {
     if (leg.mode === 'walk') {
+      const depart = new Date(cursor);
+      cursor = new Date(cursor.getTime() + leg.minutes * 60 * 1000);
       steps.push({
+        time: depart,
         title: `Walk to ${leg.toLabel}`,
         detail: `${leg.miles} mi · about ${formatDuration(leg.minutes)}`,
       });
     } else if (leg.mode === 'ride') {
+      const depart = new Date(cursor);
+      cursor = new Date(cursor.getTime() + leg.minutes * 60 * 1000);
       steps.push({
+        time: depart,
         title: `Take ${leg.providerName} to ${leg.toLabel}`,
-        detail: `About ${formatDuration(leg.minutes)} incl. pickup wait · ${formatAveragePrice(leg.costLow, leg.costHigh)}`,
+        detail: `About ${formatDuration(leg.minutes)} incl. pickup · ${formatAveragePrice(leg.costLow, leg.costHigh)}`,
+        providerId: leg.providerId,
       });
     } else {
       leg.segments.forEach((segment, index) => {
         if (index > 0) {
+          const transferAt = new Date(cursor);
+          cursor = new Date(cursor.getTime() + 4 * 60 * 1000);
           steps.push({
+            time: transferAt,
             title: `Transfer to the ${segment.lineName} train`,
-            detail: `At ${segment.fromName} — follow the in-station signs to the ${segment.lineName} platform`,
+            detail: `At ${segment.fromName} — follow signs to the ${segment.lineName} platform`,
             segment,
+            isTransfer: true,
           });
         }
 
-        steps.push({
-          title: `Board the ${segment.lineName} train at ${segment.fromName}`,
-          detail: `Toward ${segment.toName} · runs every ~${leg.headwayMinutes} min right now`,
-          segment,
-        });
+        const boardAt = new Date(cursor);
+        cursor = new Date(cursor.getTime() + segment.minutes * 60 * 1000);
 
         steps.push({
+          time: boardAt,
+          title: `Board the ${segment.lineName} train at ${segment.fromName}`,
+          detail: null,
+          headwayMinutes: leg.headwayMinutes,
+          segment,
+          paymentNote: !showedMtaPayment ? MTA_PAYMENT_NOTE : null,
+        });
+        showedMtaPayment = true;
+
+        steps.push({
+          time: new Date(cursor),
           title: `Get off at ${segment.toName}`,
           detail: `${segment.stops} stop${segment.stops > 1 ? 's' : ''} · about ${formatDuration(segment.minutes)}`,
           segment,
@@ -136,12 +153,13 @@ function buildDetailedSteps(itinerary) {
     }
   }
 
-  steps.push({ title: 'Arrive at your destination', detail: null });
+  steps.push({ time: cursor, title: 'Arrive at your destination', detail: null });
   return steps;
 }
 
 function ItineraryCard({ itinerary, isSelected, onSelect }) {
   const [expanded, setExpanded] = useState(false);
+  const steps = buildDetailedSteps(itinerary);
 
   const showSavings = itinerary.savingsVsDirect >= 1;
   const isFaster = itinerary.minutesVsDirect < 0;
@@ -170,6 +188,9 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
             </div>
             <p className="mt-0.5 text-xs text-gray-500">
               {formatDuration(itinerary.totalMinutes)}
+              {itinerary.departAt
+                ? ` · leave ${formatTime(itinerary.departAt)}`
+                : ''}
               {itinerary.minutesVsDirect > 0
                 ? ` · +${Math.round(itinerary.minutesVsDirect)} min vs direct ride`
                 : ''}
@@ -207,16 +228,33 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
 
         {expanded ? (
           <ol className="mt-3 space-y-3">
-            {buildDetailedSteps(itinerary).map((step, index) => (
+            {steps.map((step, index) => (
               <li key={index} className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
-                  {index + 1}
+                <span className="mt-0.5 w-12 shrink-0 text-right text-[11px] font-semibold tabular-nums text-gray-400">
+                  {step.time ? formatTime(step.time) : ''}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
-                    {step.segment ? <LineBullet segment={step.segment} /> : null}
+                    {step.providerId ? (
+                      <ProviderLogo providerId={step.providerId} size={18} />
+                    ) : step.segment ? (
+                      <MtaLineBullet
+                        lineName={step.segment.lineName}
+                        color={step.segment.color}
+                        textColor={step.segment.textColor}
+                        size={18}
+                      />
+                    ) : null}
                     <span>{step.title}</span>
                   </span>
+                  {step.headwayMinutes ? (
+                    <span className="mt-1 block">
+                      <LiveHeadway minutes={step.headwayMinutes} />
+                    </span>
+                  ) : null}
+                  {step.paymentNote ? (
+                    <span className="mt-1 block text-xs text-gray-500">{step.paymentNote}</span>
+                  ) : null}
                   {step.detail ? (
                     <span className="mt-0.5 block text-xs text-gray-500">{step.detail}</span>
                   ) : null}
@@ -258,8 +296,7 @@ export default function SmartRoutes({ itineraries, isLoading, selectedId, onSele
       ))}
 
       <p className="text-xs text-gray-400">
-        Tap a route to see it on the map. Transit times adjust for current headways; $2.90 subway
-        fare via OMNY.
+        Tap a route to see it on the map. Headways update for current time of day.
       </p>
     </section>
   );

@@ -18,6 +18,14 @@ export function formatAveragePrice(low, high) {
 }
 
 /**
+ * Format a time for step-by-step directions (e.g. "7:30 PM").
+ */
+export function formatTime(dateInput) {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+/**
  * Format duration in minutes.
  */
 export function formatDuration(minutes) {

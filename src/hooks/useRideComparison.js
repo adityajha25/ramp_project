@@ -6,7 +6,7 @@ import {
 } from '../services/rideProviders.js';
 import { buildSmartItineraries } from '../services/hybridRoutes.js';
 import { isWithinNYCServiceArea } from '../constants/nyc.js';
-<<<<<<< Updated upstream
+import { PERSONAL_CAR } from '../constants/providers.js';
 import { geocodeAddress } from '../services/geocoding.js';
 import { parseTripIntent } from '../services/tripIntent.js';
 import { getCurrentPickup } from '../services/currentLocation.js';
@@ -19,9 +19,6 @@ async function resolvePlace(query) {
   }
   return results[0];
 }
-=======
-import { PERSONAL_CAR } from '../constants/providers.js';
->>>>>>> Stashed changes
 
 export function useRideComparison() {
   const [pickup, setPickup] = useState(null);
@@ -106,21 +103,13 @@ export function useRideComparison() {
     }
   }, [pickup, dropoff, runComparison]);
 
-<<<<<<< Updated upstream
-  const loadDemoRoute = useCallback(async (route) => {
-    setPickup(route.pickup);
-    setDropoff(route.dropoff);
-    setError(null);
-    setAgentMeta(null);
-    setIsLoading(true);
-=======
   const loadDemoRoute = useCallback(
     async (route) => {
       setPickup(route.pickup);
       setDropoff(route.dropoff);
       setError(null);
+      setAgentMeta(null);
       setIsLoading(true);
->>>>>>> Stashed changes
 
       try {
         await runComparison(route.pickup, route.dropoff);
@@ -160,12 +149,24 @@ export function useRideComparison() {
       setDropoff(resolvedDropoff);
       setSortMode(preference);
 
-      const nextQuotes = await fetchRideQuotes({
+      const providerQuotes = await fetchRideQuotes({
         pickup: resolvedPickup,
         dropoff: resolvedDropoff,
       });
-      const annotated = annotateArriveBy(nextQuotes, intent.arriveBy);
+
+      const allQuotes = hasOwnCar
+        ? [...providerQuotes, estimatePersonalCarQuote(resolvedPickup, resolvedDropoff)]
+        : providerQuotes;
+
+      const annotated = annotateArriveBy(allQuotes, intent.arriveBy);
       setQuotes(annotated);
+      setSmartRoutes(
+        buildSmartItineraries({
+          pickup: resolvedPickup,
+          dropoff: resolvedDropoff,
+          directQuotes: providerQuotes,
+        })
+      );
 
       setAgentMeta({
         preference,
@@ -177,13 +178,14 @@ export function useRideComparison() {
       return true;
     } catch (agentError) {
       setQuotes([]);
+      setSmartRoutes([]);
       setAgentMeta(null);
       setError(agentError.message || 'Unable to plan that trip right now.');
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [hasOwnCar]);
 
   return {
     pickup,

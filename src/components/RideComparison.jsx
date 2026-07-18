@@ -6,8 +6,9 @@ function SavingsBanner({ quotes, recommendedQuote }) {
     return null;
   }
 
-  const mostExpensive = [...quotes].sort((a, b) => b.priceHigh - a.priceHigh)[0];
-  const savings = mostExpensive.priceHigh - recommendedQuote.priceLow;
+  const averageOf = (quote) => (quote.priceLow + quote.priceHigh) / 2;
+  const mostExpensive = [...quotes].sort((a, b) => averageOf(b) - averageOf(a))[0];
+  const savings = averageOf(mostExpensive) - averageOf(recommendedQuote);
 
   if (savings <= 0) {
     return null;
@@ -28,6 +29,8 @@ export default function RideComparison({
   isLoading,
   selectedProviderId,
   onSelectQuote,
+  selectedTiers,
+  onSelectTier,
 }) {
   if (isLoading) {
     return (
@@ -70,6 +73,8 @@ export default function RideComparison({
             isRecommended={index === 0}
             isSelected={quote.providerId === selectedProviderId}
             onSelect={() => onSelectQuote(quote.providerId)}
+            selectedTierId={selectedTiers?.[quote.providerId]}
+            onSelectTier={(tierId) => onSelectTier(quote.providerId, tierId)}
           />
         ))}
       </div>

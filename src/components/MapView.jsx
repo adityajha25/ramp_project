@@ -54,7 +54,14 @@ function setRouteCoordinates(map, coordinates) {
   });
 }
 
-export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChange, className }) {
+export default function MapView({
+  pickup,
+  dropoff,
+  onPickupChange,
+  onDropoffChange,
+  routeGeoJson,
+  className,
+}) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef({ pickup: null, dropoff: null });
@@ -178,6 +185,75 @@ export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChan
 
     return undefined;
   }, [pickup, dropoff]);
+
+  // Draw the selected route (direct ride or multi-leg smart itinerary).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return undefined;
+    }
+
+    const emptyCollection = { type: 'FeatureCollection', features: [] };
+
+    const apply = () => {
+      const data = routeGeoJson ?? emptyCollection;
+      const source = map.getSource('trip-route');
+
+      if (source) {
+        source.setData(data);
+      } else {
+        map.addSource('trip-route', { type: 'geojson', data });
+        map.addLayer({
+          id: 'trip-route-casing',
+          type: 'line',
+          source: 'trip-route',
+          filter: ['!=', ['get', 'dashed'], true],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': 0.85 },
+        });
+        map.addLayer({
+          id: 'trip-route-solid',
+          type: 'line',
+          source: 'trip-route',
+          filter: ['!=', ['get', 'dashed'], true],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': ['get', 'color'], 'line-width': 4.5, 'line-opacity': 0.95 },
+        });
+        map.addLayer({
+          id: 'trip-route-dashed',
+          type: 'line',
+          source: 'trip-route',
+          filter: ['==', ['get', 'dashed'], true],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': 3,
+            'line-dasharray': [0.2, 2],
+          },
+        });
+      }
+
+      if (routeGeoJson?.features?.length) {
+        const bounds = new mapboxgl.LngLatBounds();
+        for (const feature of routeGeoJson.features) {
+          for (const coordinate of feature.geometry.coordinates) {
+            bounds.extend(coordinate);
+          }
+        }
+        map.fitBounds(bounds, { padding: 70, maxZoom: 14 });
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      apply();
+      return undefined;
+    }
+
+    map.once('load', apply);
+    return () => {
+      map.off('load', apply);
+    };
+  }, [routeGeoJson]);
 
   return (
     <div className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-gray-200 shadow-card'}`}>

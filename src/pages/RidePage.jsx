@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView.jsx';
 import RideComparison from '../components/RideComparison.jsx';
+import SmartRoutes from '../components/SmartRoutes.jsx';
 import BookingSheet from '../components/BookingSheet.jsx';
-import { SORT_MODES } from '../constants/providers.js';
-import { formatCurrency } from '../utils/formatters.js';
+import { SORT_MODES, PERSONAL_CAR } from '../constants/providers.js';
+import { formatAveragePrice } from '../utils/formatters.js';
+import { buildDirectRideGeoJson, buildItineraryGeoJson } from '../services/routeGeometry.js';
 
 function TripSummary({ pickup, dropoff }) {
   return (
@@ -44,9 +46,12 @@ export default function RidePage({ ride }) {
     setPickup,
     setDropoff,
     quotes,
+    smartRoutes,
     recommendedQuote,
     sortMode,
     setSortMode,
+    hasOwnCar,
+    setHasOwnCar,
     compareRoute,
     agentMeta,
     isLoading,
@@ -54,11 +59,32 @@ export default function RidePage({ ride }) {
   } = ride;
 
   const [selectedProviderId, setSelectedProviderId] = useState(null);
+  const [selectedTiers, setSelectedTiers] = useState({});
+  const [mapFocus, setMapFocus] = useState(null);
+  const [routeGeoJson, setRouteGeoJson] = useState(null);
   const [bookingStatus, setBookingStatus] = useState(null);
   const bookingTimerRef = useRef(null);
 
   const selectedQuote =
     quotes.find((quote) => quote.providerId === selectedProviderId) ?? recommendedQuote;
+
+  const activeTier =
+    selectedQuote?.tiers?.find((tier) => tier.id === selectedTiers[selectedQuote.providerId]) ??
+    selectedQuote?.tiers?.[0] ??
+    null;
+
+  const bookingQuote =
+    selectedQuote && activeTier
+      ? {
+          ...selectedQuote,
+          providerName: activeTier.name,
+          priceLow: activeTier.priceLow,
+          priceHigh: activeTier.priceHigh,
+          etaMinutes: activeTier.etaMinutes ?? selectedQuote.etaMinutes,
+        }
+      : selectedQuote;
+
+  const isOwnCarSelected = selectedQuote?.providerId === PERSONAL_CAR.id;
 
   // No trip set (e.g. direct URL visit) — send the user back to the home page.
   useEffect(() => {
@@ -69,12 +95,71 @@ export default function RidePage({ ride }) {
 
   useEffect(() => () => window.clearTimeout(bookingTimerRef.current), []);
 
+  // Default the map to the recommended provider's route.
+  useEffect(() => {
+    if (!mapFocus && recommendedQuote) {
+      setMapFocus({ type: 'provider', id: recommendedQuote.providerId });
+    }
+  }, [mapFocus, recommendedQuote]);
+
+  // Build color-coded geometry for whatever is focused on the map.
+  useEffect(() => {
+    if (!mapFocus || !pickup || !dropoff) {
+      setRouteGeoJson(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      let geoJson = null;
+
+      if (mapFocus.type === 'provider') {
+        const quote = quotes.find((item) => item.providerId === mapFocus.id);
+        geoJson = await buildDirectRideGeoJson(pickup, dropoff, quote?.brandColor ?? '#0f172a');
+      } else {
+        const itinerary = smartRoutes.find((item) => item.id === mapFocus.id);
+        if (itinerary) {
+          geoJson = await buildItineraryGeoJson(itinerary);
+        }
+      }
+
+      if (!cancelled) {
+        setRouteGeoJson(geoJson);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mapFocus, pickup, dropoff, quotes, smartRoutes]);
+
   if (!pickup || !dropoff) {
     return null;
   }
 
+  const handleSelectQuote = (providerId) => {
+    setSelectedProviderId(providerId);
+    setMapFocus({ type: 'provider', id: providerId });
+  };
+
+  const handleSelectTier = (providerId, tierId) => {
+    setSelectedTiers((prev) => ({ ...prev, [providerId]: tierId }));
+  };
+
+  const handleSelectItinerary = (itinerary) => {
+    setMapFocus({ type: 'itinerary', id: itinerary.id });
+  };
+
   const handleBook = () => {
     if (!selectedQuote) {
+      return;
+    }
+
+    if (isOwnCarSelected) {
+      // Own car: hand off to turn-by-turn navigation instead of booking.
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${pickup.lat},${pickup.lng}&destination=${dropoff.lat},${dropoff.lng}&travelmode=driving`;
+      window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
 
@@ -116,6 +201,7 @@ export default function RidePage({ ride }) {
             dropoff={dropoff}
             onPickupChange={setPickup}
             onDropoffChange={setDropoff}
+            routeGeoJson={routeGeoJson}
             className="h-full w-full"
           />
         </div>
@@ -163,6 +249,29 @@ export default function RidePage({ ride }) {
               ))}
             </div>
 
+            <button
+              type="button"
+              onClick={() => setHasOwnCar(!hasOwnCar)}
+              className={`flex items-center justify-between rounded-2xl border px-4 py-2.5 text-sm font-medium transition ${
+                hasOwnCar
+                  ? 'border-brand bg-brand-light/40 text-brand-dark'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <span>I have my own car</span>
+              <span
+                className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${
+                  hasOwnCar ? 'bg-brand' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    hasOwnCar ? 'translate-x-4' : ''
+                  }`}
+                />
+              </span>
+            </button>
+
             {error ? (
               <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
                 {error}
@@ -176,7 +285,16 @@ export default function RidePage({ ride }) {
               dropoff={dropoff}
               isLoading={isLoading}
               selectedProviderId={selectedQuote?.providerId ?? null}
-              onSelectQuote={setSelectedProviderId}
+              onSelectQuote={handleSelectQuote}
+              selectedTiers={selectedTiers}
+              onSelectTier={handleSelectTier}
+            />
+
+            <SmartRoutes
+              itineraries={smartRoutes}
+              isLoading={isLoading}
+              selectedId={mapFocus?.type === 'itinerary' ? mapFocus.id : null}
+              onSelect={handleSelectItinerary}
             />
 
             <button
@@ -196,8 +314,9 @@ export default function RidePage({ ride }) {
                 onClick={handleBook}
                 className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
               >
-                Book {selectedQuote.providerName} ·{' '}
-                {formatCurrency(selectedQuote.priceLow)} – {formatCurrency(selectedQuote.priceHigh)}
+                {isOwnCarSelected
+                  ? `Get directions · ${formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.`
+                  : `Book ${bookingQuote.providerName} · ${formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh)}`}
               </button>
             </div>
           ) : null}
@@ -206,7 +325,7 @@ export default function RidePage({ ride }) {
 
       <BookingSheet
         status={bookingStatus}
-        quote={selectedQuote}
+        quote={bookingQuote}
         pickup={pickup}
         dropoff={dropoff}
         onDone={handleBookingDone}

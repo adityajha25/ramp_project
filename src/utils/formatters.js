@@ -5,9 +5,16 @@ export function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+/**
+ * Display a single representative price: the midpoint of the estimate range.
+ */
+export function formatAveragePrice(low, high) {
+  return formatCurrency((low + high) / 2);
 }
 
 /**

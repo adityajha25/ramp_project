@@ -1,6 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
-import { fetchRideQuotes, sortQuotes } from '../services/rideProviders.js';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  fetchRideQuotes,
+  sortQuotes,
+  estimatePersonalCarQuote,
+} from '../services/rideProviders.js';
+import { buildSmartItineraries } from '../services/hybridRoutes.js';
 import { isWithinNYCServiceArea } from '../constants/nyc.js';
+<<<<<<< Updated upstream
 import { geocodeAddress } from '../services/geocoding.js';
 import { parseTripIntent } from '../services/tripIntent.js';
 import { getCurrentPickup } from '../services/currentLocation.js';
@@ -13,12 +19,17 @@ async function resolvePlace(query) {
   }
   return results[0];
 }
+=======
+import { PERSONAL_CAR } from '../constants/providers.js';
+>>>>>>> Stashed changes
 
 export function useRideComparison() {
   const [pickup, setPickup] = useState(null);
   const [dropoff, setDropoff] = useState(null);
   const [quotes, setQuotes] = useState([]);
+  const [smartRoutes, setSmartRoutes] = useState([]);
   const [sortMode, setSortMode] = useState('cheapest');
+  const [hasOwnCar, setHasOwnCar] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [agentMeta, setAgentMeta] = useState(null);
@@ -26,6 +37,46 @@ export function useRideComparison() {
   const sortedQuotes = useMemo(() => sortQuotes(quotes, sortMode), [quotes, sortMode]);
 
   const recommendedQuote = sortedQuotes[0] ?? null;
+
+  // Keep the personal car quote in sync when the toggle flips after a compare.
+  useEffect(() => {
+    if (!pickup || !dropoff) {
+      return;
+    }
+
+    setQuotes((prev) => {
+      const withoutCar = prev.filter((quote) => quote.providerId !== PERSONAL_CAR.id);
+      if (!hasOwnCar || withoutCar.length === 0) {
+        return withoutCar;
+      }
+      return [...withoutCar, estimatePersonalCarQuote(pickup, dropoff)];
+    });
+  }, [hasOwnCar, pickup, dropoff]);
+
+  const runComparison = useCallback(
+    async (nextPickup, nextDropoff) => {
+      const providerQuotes = await fetchRideQuotes({
+        pickup: nextPickup,
+        dropoff: nextDropoff,
+      });
+
+      const allQuotes = hasOwnCar
+        ? [...providerQuotes, estimatePersonalCarQuote(nextPickup, nextDropoff)]
+        : providerQuotes;
+
+      setQuotes(allQuotes);
+      // Smart routes compare against for-hire options only — parking your own
+      // car at a subway station is out of scope for the MVP.
+      setSmartRoutes(
+        buildSmartItineraries({
+          pickup: nextPickup,
+          dropoff: nextDropoff,
+          directQuotes: providerQuotes,
+        })
+      );
+    },
+    [hasOwnCar]
+  );
 
   const compareRoute = useCallback(async () => {
     if (!pickup || !dropoff) {
@@ -43,37 +94,48 @@ export function useRideComparison() {
     setAgentMeta(null);
 
     try {
-      const nextQuotes = await fetchRideQuotes({ pickup, dropoff });
-      setQuotes(nextQuotes);
+      await runComparison(pickup, dropoff);
       return true;
     } catch (compareError) {
       setQuotes([]);
+      setSmartRoutes([]);
       setError(compareError.message || 'Unable to compare rides right now.');
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [pickup, dropoff]);
+  }, [pickup, dropoff, runComparison]);
 
+<<<<<<< Updated upstream
   const loadDemoRoute = useCallback(async (route) => {
     setPickup(route.pickup);
     setDropoff(route.dropoff);
     setError(null);
     setAgentMeta(null);
     setIsLoading(true);
+=======
+  const loadDemoRoute = useCallback(
+    async (route) => {
+      setPickup(route.pickup);
+      setDropoff(route.dropoff);
+      setError(null);
+      setIsLoading(true);
+>>>>>>> Stashed changes
 
-    try {
-      const nextQuotes = await fetchRideQuotes(route);
-      setQuotes(nextQuotes);
-      return true;
-    } catch (compareError) {
-      setQuotes([]);
-      setError(compareError.message || 'Unable to compare rides right now.');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      try {
+        await runComparison(route.pickup, route.dropoff);
+        return true;
+      } catch (compareError) {
+        setQuotes([]);
+        setSmartRoutes([]);
+        setError(compareError.message || 'Unable to compare rides right now.');
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [runComparison]
+  );
 
   const runAgentTrip = useCallback(async (prompt) => {
     setIsLoading(true);
@@ -129,9 +191,12 @@ export function useRideComparison() {
     setPickup,
     setDropoff,
     quotes: sortedQuotes,
+    smartRoutes,
     recommendedQuote,
     sortMode,
     setSortMode,
+    hasOwnCar,
+    setHasOwnCar,
     compareRoute,
     loadDemoRoute,
     runAgentTrip,

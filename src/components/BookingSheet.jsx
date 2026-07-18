@@ -1,5 +1,5 @@
 import { openProviderBooking } from '../services/deepLinks.js';
-import { formatCurrency, formatDuration } from '../utils/formatters.js';
+import { formatAveragePrice, formatDuration } from '../utils/formatters.js';
 
 /**
  * Mock in-app booking flow. Once live provider APIs are connected, the
@@ -46,7 +46,7 @@ export default function BookingSheet({ status, quote, pickup, dropoff, onDone })
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">Fare</span>
                 <span className="font-semibold text-ink">
-                  {formatCurrency(quote.priceLow)} – {formatCurrency(quote.priceHigh)}
+                  {formatAveragePrice(quote.priceLow, quote.priceHigh)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-6 text-sm">

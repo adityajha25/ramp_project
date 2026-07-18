@@ -25,6 +25,17 @@ export const RIDE_PROVIDERS = {
   },
 };
 
+/**
+ * Pseudo-provider for users driving their own car. Not part of
+ * RIDE_PROVIDERS so provider API loops and deep links skip it.
+ */
+export const PERSONAL_CAR = {
+  id: 'ownCar',
+  name: 'Your car',
+  brandColor: '#0f172a',
+  accentColor: '#ffffff',
+};
+
 export const SORT_MODES = {
   cheapest: 'Lowest cost',
   fastest: 'Fastest arrival',

@@ -14,7 +14,7 @@ export default function BookingSheet({ status, quote, pickup, dropoff, onDone })
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+      <div className="glass-strong w-full max-w-md rounded-t-3xl p-6 sm:rounded-3xl">
         {isRequesting ? (
           <div className="flex flex-col items-center py-8 text-center">
             <span className="h-10 w-10 animate-spin rounded-full border-[3px] border-gray-200 border-t-brand" />
@@ -38,7 +38,7 @@ export default function BookingSheet({ status, quote, pickup, dropoff, onDone })
               </p>
             </div>
 
-            <div className="mt-4 space-y-3 rounded-2xl bg-gray-50 p-4">
+            <div className="mt-4 space-y-3 rounded-2xl border border-white/60 bg-white/50 p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">Ride</span>
                 <span className="font-semibold text-ink">{quote.providerName}</span>

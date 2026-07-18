@@ -97,7 +97,7 @@ export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChan
     <div className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-gray-200 shadow-card'}`}>
       <div ref={mapContainerRef} className="h-full min-h-[320px] w-full" />
 
-      <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-gray-200 bg-white/90 px-3 py-2 text-xs text-gray-600 shadow-sm backdrop-blur">
+      <div className="glass pointer-events-none absolute left-3 top-3 rounded-xl px-3 py-2 text-xs text-gray-600">
         Click the map to set pickup, then dropoff.
       </div>
     </div>

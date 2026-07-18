@@ -90,7 +90,7 @@ export default function RidePage({ ride }) {
 
   return (
     <div className="flex h-screen flex-col bg-gray-50">
-      <div className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3">
+      <div className="z-20 flex items-center gap-3 border-b border-white/50 bg-white/70 px-4 py-3 backdrop-blur-xl">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -119,8 +119,8 @@ export default function RidePage({ ride }) {
           />
         </div>
 
-        <aside className="flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+        <aside className="relative flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pb-24">
             <TripSummary pickup={pickup} dropoff={dropoff} />
 
             <div className="flex gap-2">
@@ -167,11 +167,11 @@ export default function RidePage({ ride }) {
           </div>
 
           {selectedQuote && !isLoading ? (
-            <div className="border-t border-gray-200 bg-white p-4">
+            <div className="glass-strong absolute bottom-0 left-0 right-0 z-10 border-x-0 border-b-0 p-4">
               <button
                 type="button"
                 onClick={handleBook}
-                className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
+                className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark"
               >
                 Book {selectedQuote.providerName} ·{' '}
                 {formatCurrency(selectedQuote.priceLow)} – {formatCurrency(selectedQuote.priceHigh)}

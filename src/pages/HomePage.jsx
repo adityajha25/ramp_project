@@ -80,7 +80,8 @@ export default function HomePage({ ride }) {
           Where are you headed?
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          One search across Uber, Lyft, Empower, and NYC Taxi — pick the smartest ride.
+          Compare Uber, Lyft, Empower, and NYC Taxi — then book the best ride right here, without
+          switching apps.
         </p>
 
         <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-card sm:p-6">
@@ -148,7 +149,7 @@ export default function HomePage({ ride }) {
         </div>
 
         <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-          <span>Compares</span>
+          <span>Book</span>
           <span className="font-semibold text-gray-500">Uber</span>
           <span>·</span>
           <span className="font-semibold text-gray-500">Lyft</span>
@@ -156,6 +157,7 @@ export default function HomePage({ ride }) {
           <span className="font-semibold text-gray-500">Empower</span>
           <span>·</span>
           <span className="font-semibold text-gray-500">NYC Taxi</span>
+          <span>— all in one app</span>
         </div>
       </main>
     </div>

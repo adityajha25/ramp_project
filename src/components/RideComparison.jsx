@@ -26,6 +26,8 @@ export default function RideComparison({
   pickup,
   dropoff,
   isLoading,
+  selectedProviderId,
+  onSelectQuote,
 }) {
   if (isLoading) {
     return (
@@ -65,16 +67,16 @@ export default function RideComparison({
           <RideOptionCard
             key={quote.providerId}
             quote={quote}
-            pickup={pickup}
-            dropoff={dropoff}
             isRecommended={index === 0}
+            isSelected={quote.providerId === selectedProviderId}
+            onSelect={() => onSelectQuote(quote.providerId)}
           />
         ))}
       </div>
 
       <p className="text-xs text-gray-400">
-        Prices are boilerplate estimates. Live Uber, Lyft, Empower, and taxi APIs will replace
-        these values in the next iteration.
+        Estimates for now — live provider pricing and booking APIs are coming in the next
+        iteration.
       </p>
     </div>
   );

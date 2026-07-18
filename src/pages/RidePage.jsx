@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView.jsx';
 import RideComparison from '../components/RideComparison.jsx';
+import BookingSheet from '../components/BookingSheet.jsx';
 import { SORT_MODES } from '../constants/providers.js';
+import { formatCurrency } from '../utils/formatters.js';
 
 function TripSummary({ pickup, dropoff }) {
   return (
@@ -50,6 +52,13 @@ export default function RidePage({ ride }) {
     error,
   } = ride;
 
+  const [selectedProviderId, setSelectedProviderId] = useState(null);
+  const [bookingStatus, setBookingStatus] = useState(null);
+  const bookingTimerRef = useRef(null);
+
+  const selectedQuote =
+    quotes.find((quote) => quote.providerId === selectedProviderId) ?? recommendedQuote;
+
   // No trip set (e.g. direct URL visit) — send the user back to the home page.
   useEffect(() => {
     if (!pickup || !dropoff) {
@@ -57,9 +66,27 @@ export default function RidePage({ ride }) {
     }
   }, [pickup, dropoff, navigate]);
 
+  useEffect(() => () => window.clearTimeout(bookingTimerRef.current), []);
+
   if (!pickup || !dropoff) {
     return null;
   }
+
+  const handleBook = () => {
+    if (!selectedQuote) {
+      return;
+    }
+
+    // Mock request: replace with a live provider booking call when APIs land.
+    setBookingStatus('requesting');
+    bookingTimerRef.current = window.setTimeout(() => {
+      setBookingStatus('confirmed');
+    }, 1800);
+  };
+
+  const handleBookingDone = () => {
+    setBookingStatus(null);
+  };
 
   return (
     <div className="flex h-screen flex-col bg-gray-50">
@@ -82,7 +109,7 @@ export default function RidePage({ ride }) {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="h-[40vh] shrink-0 lg:order-2 lg:h-auto lg:flex-1">
+        <div className="h-[38vh] shrink-0 lg:order-2 lg:h-auto lg:flex-1">
           <MapView
             pickup={pickup}
             dropoff={dropoff}
@@ -92,50 +119,75 @@ export default function RidePage({ ride }) {
           />
         </div>
 
-        <aside className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto border-t border-gray-200 bg-gray-50 p-4 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
-          <TripSummary pickup={pickup} dropoff={dropoff} />
+        <aside className="flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+            <TripSummary pickup={pickup} dropoff={dropoff} />
 
-          <div className="flex gap-2">
-            {Object.entries(SORT_MODES).map(([mode, label]) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setSortMode(mode)}
-                className={`flex-1 rounded-full px-3 py-2 text-xs font-semibold transition ${
-                  sortMode === mode
-                    ? 'bg-ink text-white'
-                    : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            <div className="flex gap-2">
+              {Object.entries(SORT_MODES).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setSortMode(mode)}
+                  className={`flex-1 rounded-full px-3 py-2 text-xs font-semibold transition ${
+                    sortMode === mode
+                      ? 'bg-ink text-white'
+                      : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {error ? (
+              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                {error}
+              </p>
+            ) : null}
+
+            <RideComparison
+              quotes={quotes}
+              recommendedQuote={recommendedQuote}
+              pickup={pickup}
+              dropoff={dropoff}
+              isLoading={isLoading}
+              selectedProviderId={selectedQuote?.providerId ?? null}
+              onSelectQuote={setSelectedProviderId}
+            />
+
+            <button
+              type="button"
+              onClick={compareRoute}
+              disabled={isLoading}
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:border-brand hover:text-brand disabled:opacity-50"
+            >
+              {isLoading ? 'Refreshing…' : 'Refresh estimates'}
+            </button>
           </div>
 
-          {error ? (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-              {error}
-            </p>
+          {selectedQuote && !isLoading ? (
+            <div className="border-t border-gray-200 bg-white p-4">
+              <button
+                type="button"
+                onClick={handleBook}
+                className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
+              >
+                Book {selectedQuote.providerName} ·{' '}
+                {formatCurrency(selectedQuote.priceLow)} – {formatCurrency(selectedQuote.priceHigh)}
+              </button>
+            </div>
           ) : null}
-
-          <RideComparison
-            quotes={quotes}
-            recommendedQuote={recommendedQuote}
-            pickup={pickup}
-            dropoff={dropoff}
-            isLoading={isLoading}
-          />
-
-          <button
-            type="button"
-            onClick={compareRoute}
-            disabled={isLoading}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:border-brand hover:text-brand disabled:opacity-50"
-          >
-            {isLoading ? 'Refreshing…' : 'Refresh estimates'}
-          </button>
         </aside>
       </div>
+
+      <BookingSheet
+        status={bookingStatus}
+        quote={selectedQuote}
+        pickup={pickup}
+        dropoff={dropoff}
+        onDone={handleBookingDone}
+      />
     </div>
   );
 }

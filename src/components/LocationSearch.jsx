@@ -14,7 +14,7 @@ function SearchField({ value, placeholder, onSelect, marker }) {
   }, [value]);
 
   useEffect(() => {
-    if (!query.trim()) {
+    if (!query.trim() || query === value?.label) {
       setResults([]);
       return undefined;
     }
@@ -36,13 +36,19 @@ function SearchField({ value, placeholder, onSelect, marker }) {
     }, 350);
 
     return () => window.clearTimeout(debounceRef.current);
-  }, [query]);
+  }, [query, value]);
 
   const showDropdown = isFocused && (results.length > 0 || isSearching || searchError);
 
+  const handleClear = () => {
+    setQuery('');
+    setResults([]);
+    onSelect(null);
+  };
+
   return (
     <div className="relative">
-      <div className="flex items-center gap-3 rounded-xl bg-gray-100 px-3 transition focus-within:ring-2 focus-within:ring-brand/60">
+      <div className="flex items-center gap-3 rounded-xl border border-white/60 bg-white/55 px-3 backdrop-blur-sm transition focus-within:bg-white/85 focus-within:ring-2 focus-within:ring-brand/50">
         {marker}
         <input
           type="text"
@@ -53,12 +59,25 @@ function SearchField({ value, placeholder, onSelect, marker }) {
           placeholder={placeholder}
           className="w-full bg-transparent py-3 text-sm font-medium text-ink outline-none placeholder:font-normal placeholder:text-gray-400"
         />
+
+        {query ? (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label="Clear location"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-200/70 hover:text-gray-600"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-card">
+        <div className="glass-strong absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl">
           {isSearching ? (
-            <p className="px-3 py-2 text-xs text-gray-400">Searching NYC addresses…</p>
+            <p className="px-3 py-2 text-xs text-gray-500">Searching NYC addresses…</p>
           ) : null}
 
           {searchError ? (
@@ -76,7 +95,7 @@ function SearchField({ value, placeholder, onSelect, marker }) {
                       setQuery(result.label);
                       setResults([]);
                     }}
-                    className="block w-full px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="block w-full px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-white/70"
                   >
                     {result.label}
                   </button>

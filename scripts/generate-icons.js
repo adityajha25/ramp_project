@@ -1,20 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const iconsDir = path.join(__dirname, '..', 'public', 'icons');
-
-// Placeholder PNG until branded assets are added.
-const placeholderPng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ZkAAAAASUVORK5CYII=',
-  'base64'
-);
+const logoPath = path.join(__dirname, '..', 'public', 'logo.png');
 
 fs.mkdirSync(iconsDir, { recursive: true });
 
-for (const size of [192, 512]) {
-  fs.writeFileSync(path.join(iconsDir, `icon-${size}.png`), placeholderPng);
+if (!fs.existsSync(logoPath)) {
+  console.error('Missing public/logo.png — cannot generate PWA icons.');
+  process.exit(1);
 }
 
-console.log('Generated placeholder PWA icons in public/icons/');
+for (const size of [180, 192, 512]) {
+  const out = path.join(iconsDir, `icon-${size}.png`);
+  execSync(`sips -z ${size} ${size} "${logoPath}" --out "${out}"`, { stdio: 'inherit' });
+}
+
+console.log('Generated PWA icons (180, 192, 512) from public/logo.png');

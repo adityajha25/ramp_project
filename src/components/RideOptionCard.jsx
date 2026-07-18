@@ -31,6 +31,11 @@ export default function RideOptionCard({ quote, isRecommended, isSelected, onSel
             </div>
             <p className="mt-0.5 text-sm text-gray-500">
               {formatDuration(quote.etaMinutes)} trip · est.
+              {quote.surgeMultiplier > 1 ? (
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                  {quote.surgeMultiplier.toFixed(1)}x surge
+                </span>
+              ) : null}
             </p>
           </div>
         </div>

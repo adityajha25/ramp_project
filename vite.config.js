@@ -3,6 +3,16 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mapbox: ['mapbox-gl'],
+          vendor: ['react', 'react-dom'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

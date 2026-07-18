@@ -75,8 +75,8 @@ export default function RideComparison({
       </div>
 
       <p className="text-xs text-gray-400">
-        Estimates for now — live provider pricing and booking APIs are coming in the next
-        iteration.
+        Prices are simulated from distance, traffic, and market variance — live provider pricing
+        and booking APIs are coming in the next iteration.
       </p>
     </div>
   );

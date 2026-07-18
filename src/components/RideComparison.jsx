@@ -15,7 +15,10 @@ function SavingsBanner({ quotes, recommendedQuote }) {
   }
 
   return (
-    <div className="rounded-xl border border-accent/40 bg-accent-light px-3 py-2 text-sm font-medium text-accent-dark">
+    <div className="animate-rise-in flex items-center gap-2 rounded-xl border border-accent/25 bg-accent/10 px-3 py-2 text-sm font-medium text-accent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0-6 6m6-6 6 6" />
+      </svg>
       Save up to {formatCurrency(savings)} vs {mostExpensive.providerName}.
     </div>
   );
@@ -36,7 +39,7 @@ export default function RideComparison({
     return (
       <div className="space-y-3">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl border border-gray-200 bg-white" />
+          <div key={i} className="skeleton h-24" />
         ))}
       </div>
     );
@@ -44,9 +47,9 @@ export default function RideComparison({
 
   if (!pickup || !dropoff) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-4">
-        <p className="text-sm font-medium text-gray-700">Comparison dashboard</p>
-        <p className="mt-2 text-sm text-gray-400">
+      <div className="rounded-2xl border border-dashed border-surface-hair-strong bg-surface/40 p-4">
+        <p className="text-sm font-medium text-paper">Comparison dashboard</p>
+        <p className="mt-2 text-sm text-paper-faint">
           Set a pickup and dropoff to compare Uber, Lyft, Empower, and NYC taxi side by side.
         </p>
       </div>
@@ -55,8 +58,8 @@ export default function RideComparison({
 
   if (quotes.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <p className="text-sm text-gray-500">No quotes yet. Tap refresh to load estimates.</p>
+      <div className="surface-card rounded-2xl p-4">
+        <p className="text-sm text-paper-dim">No quotes yet. Tap refresh to load estimates.</p>
       </div>
     );
   }
@@ -79,7 +82,7 @@ export default function RideComparison({
         ))}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-paper-faint">
         Prices are simulated from distance, traffic, and market variance — live provider pricing
         and booking APIs are coming in the next iteration.
       </p>

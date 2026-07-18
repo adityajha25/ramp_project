@@ -30,26 +30,26 @@ function statusLine(trip) {
   }
 }
 
-function DriverCard({ driver, plateLabel, brandColor, providerName }) {
+function DriverCard({ driver, brandColor, providerName }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-card">
+    <div className="surface-card animate-rise-in flex items-center gap-3 rounded-2xl p-3.5">
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-        style={{ backgroundColor: brandColor || '#0f172a' }}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white ring-1 ring-surface-hair-strong"
+        style={{ backgroundColor: brandColor || '#1B2032' }}
       >
         {driver.firstName.charAt(0)}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-ink">
+        <p className="truncate text-sm font-semibold text-paper">
           {driver.firstName} {driver.lastInitial}.
-          <span className="ml-2 text-xs font-medium text-gray-500">★ {driver.rating}</span>
+          <span className="ml-2 font-mono text-xs font-medium text-paper-dim">★ {driver.rating}</span>
         </p>
-        <p className="truncate text-xs text-gray-500">
+        <p className="truncate text-xs text-paper-dim">
           {driver.car.color} {driver.car.make} {driver.car.model} · {providerName}
         </p>
       </div>
-      <span className="shrink-0 rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 font-mono text-xs font-bold tracking-wider text-ink">
-        {plateLabel}
+      <span className="shrink-0 rounded-lg border border-surface-hair-strong bg-surface-raised px-2 py-1 font-mono text-xs font-bold tracking-wider text-paper">
+        {driver.plate}
       </span>
     </div>
   );
@@ -72,29 +72,29 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             {isMultiLeg && !isCompleted ? (
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-paper-faint">
                 Leg {trip.legIndex + 1} of {trip.legCount}
               </p>
             ) : null}
-            <p className="text-base font-bold text-ink">{title}</p>
-            {detail ? <p className="mt-0.5 text-sm text-gray-500">{detail}</p> : null}
+            <p className="font-display text-base font-bold text-paper">{title}</p>
+            {detail ? <p className="mt-0.5 text-sm text-paper-dim">{detail}</p> : null}
           </div>
 
           {isCompleted ? (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+            <span className="animate-pop-in flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-5 w-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </span>
           ) : trip.phase === 'assigning' ? (
-            <span className="h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-gray-200 border-t-brand" />
+            <span className="h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-surface-hair-strong border-t-signal" />
           ) : null}
         </div>
 
         {!isCompleted && trip.phase !== 'assigning' ? (
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200/80">
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-raised">
             <div
-              className="h-full rounded-full bg-brand transition-[width] duration-200"
+              className="h-full rounded-full bg-signal transition-[width] duration-200"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -104,20 +104,19 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
       {showDriver ? (
         <DriverCard
           driver={trip.driver}
-          plateLabel={trip.driver.plate}
           brandColor={trip.brandColor}
           providerName={trip.providerName}
         />
       ) : null}
 
       {isCompleted && fareLabel ? (
-        <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-card">
-          <span className="text-sm text-gray-500">Trip total</span>
-          <span className="text-lg font-bold text-ink">{fareLabel}</span>
+        <div className="surface-card animate-rise-in flex items-center justify-between rounded-2xl p-4">
+          <span className="text-sm text-paper-dim">Trip total</span>
+          <span className="font-mono text-lg font-bold text-paper">{fareLabel}</span>
         </div>
       ) : null}
 
-      <p className="text-xs text-gray-400">
+      <p className="rounded-xl border border-signal/25 bg-signal/10 px-3 py-2 text-xs text-paper-dim">
         Simulated demo — driver, car, and movement are generated. Live dispatch replaces this once
         provider APIs are connected.
       </p>
@@ -126,7 +125,7 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
         <button
           type="button"
           onClick={onDone}
-          className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink/90"
+          className="press w-full rounded-xl bg-signal px-4 py-3 text-sm font-semibold text-signal-ink shadow-glow-sm transition hover:bg-[#ff8a5c]"
         >
           Done
         </button>
@@ -134,7 +133,7 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
         <button
           type="button"
           onClick={onCancel}
-          className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+          className="press w-full rounded-xl border border-danger/40 bg-danger-light px-4 py-2.5 text-sm font-semibold text-danger transition hover:border-danger/70"
         >
           Cancel trip
         </button>

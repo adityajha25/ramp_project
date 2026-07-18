@@ -30,7 +30,12 @@ export default function RideOptionCard({ quote, pickup, dropoff, isRecommended }
           </div>
 
           <p className="mt-2 text-sm text-slate-400">
-            ETA {formatDuration(quote.etaMinutes)} · Estimate
+            ETA {formatDuration(quote.etaMinutes)} · Simulated estimate
+            {quote.surgeMultiplier > 1 ? (
+              <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                {quote.surgeMultiplier.toFixed(1)}x surge
+              </span>
+            ) : null}
           </p>
         </div>
 

@@ -81,8 +81,8 @@ export default function RideComparison({
       </div>
 
       <p className="text-xs text-slate-500">
-        Prices are boilerplate estimates. Live Uber, Lyft, Empower, and taxi APIs will replace
-        these values in the next iteration.
+        Prices are simulated from distance, traffic, and random market variance. Tap compare again
+        to refresh estimates.
       </p>
     </div>
   );

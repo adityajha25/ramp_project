@@ -1,22 +1,42 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const iconsDir = path.join(__dirname, '..', 'public', 'icons');
 const logoPath = path.join(__dirname, '..', 'public', 'logo.png');
+const SIZES = [180, 192, 512];
 
-fs.mkdirSync(iconsDir, { recursive: true });
+function iconsAlreadyPresent() {
+  return SIZES.every((size) => fs.existsSync(path.join(iconsDir, `icon-${size}.png`)));
+}
 
-if (!fs.existsSync(logoPath)) {
-  console.error('Missing public/logo.png — cannot generate PWA icons.');
+async function main() {
+  fs.mkdirSync(iconsDir, { recursive: true });
+
+  if (!fs.existsSync(logoPath)) {
+    if (iconsAlreadyPresent()) {
+      console.log('Missing public/logo.png, but committed PWA icons are present. Skipping generation.');
+      return;
+    }
+
+    console.error('Missing public/logo.png and no PWA icons found in public/icons/.');
+    process.exit(1);
+  }
+
+  for (const size of SIZES) {
+    const out = path.join(iconsDir, `icon-${size}.png`);
+    await sharp(logoPath)
+      .resize(size, size, { fit: 'cover' })
+      .png()
+      .toFile(out);
+  }
+
+  console.log('Generated PWA icons (180, 192, 512) from public/logo.png');
+}
+
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
-}
-
-for (const size of [180, 192, 512]) {
-  const out = path.join(iconsDir, `icon-${size}.png`);
-  execSync(`sips -z ${size} ${size} "${logoPath}" --out "${out}"`, { stdio: 'inherit' });
-}
-
-console.log('Generated PWA icons (180, 192, 512) from public/logo.png');
+});

@@ -2,14 +2,64 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { NYC_CENTER, DEFAULT_MAP_ZOOM } from '../constants/nyc.js';
 import { reverseGeocode } from '../services/geocoding.js';
+import { fetchDrivingRoute } from '../services/directions.js';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const ROUTE_SOURCE = 'trip-route';
+const ROUTE_LAYER = 'trip-route-line';
+
+function ensureRouteLayer(map) {
+  if (map.getSource(ROUTE_SOURCE)) {
+    return;
+  }
+
+  map.addSource(ROUTE_SOURCE, {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: [] },
+      properties: {},
+    },
+  });
+
+  map.addLayer({
+    id: ROUTE_LAYER,
+    type: 'line',
+    source: ROUTE_SOURCE,
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round',
+    },
+    paint: {
+      'line-color': '#2563eb',
+      'line-width': 4,
+      'line-opacity': 0.85,
+    },
+  });
+}
+
+function setRouteCoordinates(map, coordinates) {
+  const source = map.getSource(ROUTE_SOURCE);
+  if (!source) {
+    return;
+  }
+
+  source.setData({
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates: coordinates || [],
+    },
+    properties: {},
+  });
+}
 
 export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChange, className }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef({ pickup: null, dropoff: null });
   const clickModeRef = useRef('pickup');
+  const routeRequestId = useRef(0);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -26,6 +76,10 @@ export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChan
     });
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'top-right');
+
+    map.on('load', () => {
+      ensureRouteLayer(map);
+    });
 
     map.on('click', async (event) => {
       const point = {
@@ -81,16 +135,48 @@ export default function MapView({ pickup, dropoff, onPickupChange, onDropoffChan
     renderMarker('pickup', pickup, '#2ec4a0');
     renderMarker('dropoff', dropoff, '#2563eb');
 
-    if (pickup && dropoff) {
+    const requestId = ++routeRequestId.current;
+
+    const updateRoute = async () => {
+      if (!pickup || !dropoff) {
+        if (map.isStyleLoaded()) {
+          ensureRouteLayer(map);
+          setRouteCoordinates(map, []);
+        }
+        return;
+      }
+
+      const coordinates = await fetchDrivingRoute(pickup, dropoff);
+      if (requestId !== routeRequestId.current || !mapRef.current) {
+        return;
+      }
+
+      const apply = () => {
+        ensureRouteLayer(map);
+        setRouteCoordinates(map, coordinates);
+      };
+
+      if (map.isStyleLoaded()) {
+        apply();
+      } else {
+        map.once('load', apply);
+      }
+
       const bounds = new mapboxgl.LngLatBounds();
       bounds.extend([pickup.lng, pickup.lat]);
       bounds.extend([dropoff.lng, dropoff.lat]);
       map.fitBounds(bounds, { padding: 80, maxZoom: 13 });
-    } else if (pickup) {
+    };
+
+    updateRoute();
+
+    if (pickup && !dropoff) {
       map.flyTo({ center: [pickup.lng, pickup.lat], zoom: 13 });
-    } else if (dropoff) {
+    } else if (dropoff && !pickup) {
       map.flyTo({ center: [dropoff.lng, dropoff.lat], zoom: 13 });
     }
+
+    return undefined;
   }, [pickup, dropoff]);
 
   return (

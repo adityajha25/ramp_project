@@ -10,6 +10,7 @@ Smart transportation decision platform for NYC commuters. Compare **Uber**, **Ly
 - Mapbox map centered on NYC metro
 - Address search geofenced to NYC and surrounding areas
 - Side-by-side ride comparison dashboard
+- **Agent mode** — describe a trip in plain English; OpenAI parses intent (heuristic fallback if the key fails), then opens the same map + pricing page as manual booking, sorted to your preference
 - One-tap deep links to open Uber, Lyft, Empower, or taxi booking apps
 - Hardcoded/estimated pricing until live provider APIs are wired up
 
@@ -37,15 +38,21 @@ Open the local URL shown in your terminal (usually `http://localhost:5173`).
 | Variable | Description |
 | --- | --- |
 | `VITE_MAPBOX_TOKEN` | Mapbox public token for map + geocoding |
+| `OPENAI_API_KEY` | Server-side OpenAI key for Agent mode (`/api/parse-trip`). Optional — without it, the heuristic parser is used. |
+
+For Vercel deploys, set `OPENAI_API_KEY` in the project’s environment variables (not as a `VITE_` var).
 
 ## Project structure
 
 ```
+api/
+├── parse-trip.js     # Vercel serverless: OpenAI trip intent
+└── _lib/             # Shared OpenAI parser (also used by Vite dev)
 src/
 ├── components/       # UI: map, search, comparison cards
 ├── constants/        # NYC bounds, provider metadata
 ├── hooks/            # useRideComparison state hook
-├── services/         # geocoding, pricing, deep links
+├── services/         # geocoding, pricing, deep links, trip intent, current location
 └── utils/            # formatting helpers
 ```
 

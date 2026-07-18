@@ -48,6 +48,7 @@ export default function RidePage({ ride }) {
     sortMode,
     setSortMode,
     compareRoute,
+    agentMeta,
     isLoading,
     error,
   } = ride;
@@ -122,6 +123,28 @@ export default function RidePage({ ride }) {
         <aside className="flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
             <TripSummary pickup={pickup} dropoff={dropoff} />
+
+            {agentMeta ? (
+              <div className="rounded-2xl border border-brand/20 bg-brand-light/50 px-3 py-2.5 text-xs text-brand-dark">
+                <p className="font-semibold text-ink">From your request</p>
+                <p className="mt-0.5 text-gray-600">“{agentMeta.prompt}”</p>
+                {agentMeta.arriveBy ? (
+                  <p className="mt-1 text-gray-600">
+                    Arrive by{' '}
+                    {new Date(agentMeta.arriveBy).toLocaleTimeString([], {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                    {quotes.some((q) => q.meetsArriveBy === false)
+                      ? ' — some options may not make it'
+                      : ''}
+                  </p>
+                ) : null}
+                {agentMeta.source === 'heuristic' ? (
+                  <p className="mt-1 text-amber-800">Parsed offline — OpenAI was unavailable.</p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="flex gap-2">
               {Object.entries(SORT_MODES).map(([mode, label]) => (

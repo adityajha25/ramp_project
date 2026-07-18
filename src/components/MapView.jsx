@@ -54,12 +54,37 @@ function setRouteCoordinates(map, coordinates) {
   });
 }
 
+function vehicleMarkerElement(mode, color) {
+  const element = document.createElement('div');
+
+  if (mode === 'ride') {
+    element.innerHTML = `
+      <svg width="34" height="34" viewBox="0 0 24 24" style="filter: drop-shadow(0 2px 4px rgba(15,23,42,0.35));">
+        <g>
+          <rect x="7" y="3" width="10" height="18" rx="3.2" fill="${color || '#0f172a'}" stroke="#ffffff" stroke-width="1.4"/>
+          <rect x="8.4" y="6" width="7.2" height="3.4" rx="1.2" fill="rgba(255,255,255,0.85)"/>
+          <rect x="8.4" y="15" width="7.2" height="2.6" rx="1" fill="rgba(255,255,255,0.55)"/>
+        </g>
+      </svg>`;
+  } else {
+    const dotColor = mode === 'walk' ? '#2ec4a0' : '#1f2937';
+    element.innerHTML = `
+      <span style="position:relative;display:block;width:18px;height:18px;">
+        <span style="position:absolute;inset:-6px;border-radius:9999px;background:${dotColor};opacity:0.25;animation:ping 1.4s cubic-bezier(0,0,0.2,1) infinite;"></span>
+        <span style="position:absolute;inset:0;border-radius:9999px;background:${dotColor};border:3px solid #ffffff;box-shadow:0 1px 4px rgba(15,23,42,0.35);"></span>
+      </span>`;
+  }
+
+  return element;
+}
+
 export default function MapView({
   pickup,
   dropoff,
   onPickupChange,
   onDropoffChange,
   routeGeoJson,
+  vehicle,
   className,
 }) {
   const mapContainerRef = useRef(null);
@@ -67,6 +92,9 @@ export default function MapView({
   const markersRef = useRef({ pickup: null, dropoff: null });
   const clickModeRef = useRef('pickup');
   const routeRequestId = useRef(0);
+  const vehicleMarkerRef = useRef(null);
+  const vehicleKindRef = useRef(null);
+  const lastFollowRef = useRef(0);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -254,6 +282,58 @@ export default function MapView({
       map.off('load', apply);
     };
   }, [routeGeoJson]);
+
+  // Simulated vehicle marker: animated car (or walking/subway dot) that
+  // follows the trip. Recreated when the transport mode changes.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    if (!vehicle?.position) {
+      if (vehicleMarkerRef.current) {
+        vehicleMarkerRef.current.remove();
+        vehicleMarkerRef.current = null;
+        vehicleKindRef.current = null;
+      }
+      return;
+    }
+
+    const kind = `${vehicle.mode}-${vehicle.color || ''}`;
+
+    if (vehicleMarkerRef.current && vehicleKindRef.current !== kind) {
+      vehicleMarkerRef.current.remove();
+      vehicleMarkerRef.current = null;
+    }
+
+    if (!vehicleMarkerRef.current) {
+      vehicleMarkerRef.current = new mapboxgl.Marker({
+        element: vehicleMarkerElement(vehicle.mode, vehicle.color),
+        rotationAlignment: 'map',
+        pitchAlignment: 'map',
+      })
+        .setLngLat([vehicle.position.lng, vehicle.position.lat])
+        .addTo(map);
+      vehicleKindRef.current = kind;
+    }
+
+    vehicleMarkerRef.current.setLngLat([vehicle.position.lng, vehicle.position.lat]);
+    if (vehicle.mode === 'ride') {
+      vehicleMarkerRef.current.setRotation(vehicle.position.bearing ?? 0);
+    }
+
+    // Gently keep the camera on the vehicle without fighting user drags.
+    const now = performance.now();
+    if (now - lastFollowRef.current > 1500) {
+      lastFollowRef.current = now;
+      map.easeTo({
+        center: [vehicle.position.lng, vehicle.position.lat],
+        duration: 900,
+        zoom: Math.max(map.getZoom(), 13.5),
+      });
+    }
+  }, [vehicle]);
 
   return (
     <div className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-gray-200 shadow-card'}`}>

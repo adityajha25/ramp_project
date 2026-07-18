@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView.jsx';
 import RideComparison from '../components/RideComparison.jsx';
 import SmartRoutes from '../components/SmartRoutes.jsx';
-import BookingSheet from '../components/BookingSheet.jsx';
+import TripTracker from '../components/TripTracker.jsx';
 import { SORT_MODES, PERSONAL_CAR } from '../constants/providers.js';
 import { formatAveragePrice } from '../utils/formatters.js';
 import { buildDirectRideGeoJson, buildItineraryGeoJson } from '../services/routeGeometry.js';
+import { startRideSimulation, startItinerarySimulation } from '../services/tripSimulation.js';
 
 function TripSummary({ pickup, dropoff }) {
   return (
@@ -62,8 +63,9 @@ export default function RidePage({ ride }) {
   const [selectedTiers, setSelectedTiers] = useState({});
   const [mapFocus, setMapFocus] = useState(null);
   const [routeGeoJson, setRouteGeoJson] = useState(null);
-  const [bookingStatus, setBookingStatus] = useState(null);
-  const bookingTimerRef = useRef(null);
+  const [trip, setTrip] = useState(null);
+  const [tripFareLabel, setTripFareLabel] = useState(null);
+  const simulationRef = useRef(null);
 
   const selectedQuote =
     quotes.find((quote) => quote.providerId === selectedProviderId) ?? recommendedQuote;
@@ -93,7 +95,7 @@ export default function RidePage({ ride }) {
     }
   }, [pickup, dropoff, navigate]);
 
-  useEffect(() => () => window.clearTimeout(bookingTimerRef.current), []);
+  useEffect(() => () => simulationRef.current?.cancel(), []);
 
   // Default the map to the recommended provider's route.
   useEffect(() => {
@@ -151,6 +153,9 @@ export default function RidePage({ ride }) {
     setMapFocus({ type: 'itinerary', id: itinerary.id });
   };
 
+  const focusedItinerary =
+    mapFocus?.type === 'itinerary' ? smartRoutes.find((item) => item.id === mapFocus.id) : null;
+
   const handleBook = () => {
     if (!selectedQuote) {
       return;
@@ -163,15 +168,33 @@ export default function RidePage({ ride }) {
       return;
     }
 
-    // Mock request: replace with a live provider booking call when APIs land.
-    setBookingStatus('requesting');
-    bookingTimerRef.current = window.setTimeout(() => {
-      setBookingStatus('confirmed');
-    }, 1800);
+    // Simulated dispatch: replace with live provider booking calls when APIs land.
+    setTripFareLabel(formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh));
+    simulationRef.current = startRideSimulation({
+      pickup,
+      dropoff,
+      quote: bookingQuote,
+      onUpdate: setTrip,
+    });
   };
 
-  const handleBookingDone = () => {
-    setBookingStatus(null);
+  const handleStartItinerary = () => {
+    if (!focusedItinerary) {
+      return;
+    }
+
+    setTripFareLabel(formatAveragePrice(focusedItinerary.costLow, focusedItinerary.costHigh));
+    simulationRef.current = startItinerarySimulation({
+      itinerary: focusedItinerary,
+      onUpdate: setTrip,
+    });
+  };
+
+  const handleEndTrip = () => {
+    simulationRef.current?.cancel();
+    simulationRef.current = null;
+    setTrip(null);
+    setTripFareLabel(null);
   };
 
   return (
@@ -202,11 +225,27 @@ export default function RidePage({ ride }) {
             onPickupChange={setPickup}
             onDropoffChange={setDropoff}
             routeGeoJson={routeGeoJson}
+            vehicle={
+              trip?.position
+                ? { position: trip.position, mode: trip.mode, color: trip.brandColor }
+                : null
+            }
             className="h-full w-full"
           />
         </div>
 
         <aside className="relative flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
+          {trip ? (
+            <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+              <TripSummary pickup={pickup} dropoff={dropoff} />
+              <TripTracker
+                trip={trip}
+                fareLabel={tripFareLabel}
+                onCancel={handleEndTrip}
+                onDone={handleEndTrip}
+              />
+            </div>
+          ) : (
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pb-24">
             <TripSummary pickup={pickup} dropoff={dropoff} />
 
@@ -306,30 +345,34 @@ export default function RidePage({ ride }) {
               {isLoading ? 'Refreshing…' : 'Refresh estimates'}
             </button>
           </div>
+          )}
 
-          {selectedQuote && !isLoading ? (
+          {!trip && selectedQuote && !isLoading ? (
             <div className="glass-strong absolute bottom-0 left-0 right-0 z-10 border-x-0 border-b-0 p-4">
-              <button
-                type="button"
-                onClick={handleBook}
-                className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark"
-              >
-                {isOwnCarSelected
-                  ? `Get directions · ${formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.`
-                  : `Book ${bookingQuote.providerName} · ${formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh)}`}
-              </button>
+              {focusedItinerary ? (
+                <button
+                  type="button"
+                  onClick={handleStartItinerary}
+                  className="w-full rounded-xl bg-ink px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-ink/25 transition hover:bg-ink/90"
+                >
+                  Start trip · {focusedItinerary.label} ·{' '}
+                  {formatAveragePrice(focusedItinerary.costLow, focusedItinerary.costHigh)}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleBook}
+                  className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark"
+                >
+                  {isOwnCarSelected
+                    ? `Get directions · ${formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.`
+                    : `Book ${bookingQuote.providerName} · ${formatAveragePrice(bookingQuote.priceLow, bookingQuote.priceHigh)}`}
+                </button>
+              )}
             </div>
           ) : null}
         </aside>
       </div>
-
-      <BookingSheet
-        status={bookingStatus}
-        quote={bookingQuote}
-        pickup={pickup}
-        dropoff={dropoff}
-        onDone={handleBookingDone}
-      />
     </div>
   );
 }

@@ -8,10 +8,8 @@ export default function RideOptionCard({ quote, pickup, dropoff, isRecommended }
 
   return (
     <article
-      className={`rounded-2xl border p-4 transition ${
-        isRecommended
-          ? 'border-brand bg-brand/10 shadow-lg shadow-brand/10'
-          : 'border-slate-800 bg-slate-900/70'
+      className={`rounded-2xl border bg-white p-4 shadow-card transition ${
+        isRecommended ? 'border-accent ring-1 ring-accent/40' : 'border-gray-200'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -21,21 +19,21 @@ export default function RideOptionCard({ quote, pickup, dropoff, isRecommended }
               className="inline-block h-3 w-3 rounded-full"
               style={{ backgroundColor: quote.brandColor }}
             />
-            <h3 className="text-base font-semibold text-white">{quote.providerName}</h3>
+            <h3 className="text-base font-semibold text-ink">{quote.providerName}</h3>
             {isRecommended ? (
-              <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                 Best pick
               </span>
             ) : null}
           </div>
 
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-gray-500">
             ETA {formatDuration(quote.etaMinutes)} · Estimate
           </p>
         </div>
 
         <div className="text-right">
-          <p className="text-lg font-semibold text-white">
+          <p className="text-lg font-semibold text-ink">
             {formatCurrency(quote.priceLow)} – {formatCurrency(quote.priceHigh)}
           </p>
         </div>
@@ -44,7 +42,7 @@ export default function RideOptionCard({ quote, pickup, dropoff, isRecommended }
       <button
         type="button"
         onClick={handleBook}
-        className="mt-4 w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+        className="mt-4 w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:opacity-90"
         style={{
           backgroundColor: quote.brandColor,
           color: quote.accentColor,

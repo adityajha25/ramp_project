@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { geocodeAddress } from '../services/geocoding.js';
 
-function SearchField({ label, value, placeholder, onSelect }) {
+function SearchField({ value, placeholder, onSelect, marker }) {
   const [query, setQuery] = useState(value?.label || '');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [isFocused, setIsFocused] = useState(false);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -37,47 +38,55 @@ function SearchField({ label, value, placeholder, onSelect }) {
     return () => window.clearTimeout(debounceRef.current);
   }, [query]);
 
+  const showDropdown = isFocused && (results.length > 0 || isSearching || searchError);
+
   return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </span>
-      <input
-        type="text"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none ring-brand/40 placeholder:text-slate-500 focus:border-brand focus:ring-2"
-      />
+    <div className="relative">
+      <div className="flex items-center gap-3 rounded-xl bg-gray-100 px-3 transition focus-within:ring-2 focus-within:ring-brand/60">
+        {marker}
+        <input
+          type="text"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => window.setTimeout(() => setIsFocused(false), 150)}
+          placeholder={placeholder}
+          className="w-full bg-transparent py-3 text-sm font-medium text-ink outline-none placeholder:font-normal placeholder:text-gray-400"
+        />
+      </div>
 
-      {isSearching ? (
-        <p className="mt-1 text-xs text-slate-500">Searching NYC addresses…</p>
-      ) : null}
+      {showDropdown ? (
+        <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-card">
+          {isSearching ? (
+            <p className="px-3 py-2 text-xs text-gray-400">Searching NYC addresses…</p>
+          ) : null}
 
-      {searchError ? (
-        <p className="mt-1 text-xs text-red-300">{searchError}</p>
-      ) : null}
+          {searchError ? (
+            <p className="px-3 py-2 text-xs text-red-500">{searchError}</p>
+          ) : null}
 
-      {results.length > 0 ? (
-        <ul className="mt-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-          {results.map((result) => (
-            <li key={result.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  onSelect(result);
-                  setQuery(result.label);
-                  setResults([]);
-                }}
-                className="block w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
-              >
-                {result.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+          {results.length > 0 ? (
+            <ul>
+              {results.map((result) => (
+                <li key={result.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelect(result);
+                      setQuery(result.label);
+                      setResults([]);
+                    }}
+                    className="block w-full px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    {result.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
-    </label>
+    </div>
   );
 }
 
@@ -92,28 +101,28 @@ export default function LocationSearch({
   const canCompare = Boolean(pickup && dropoff);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <SearchField
-        label="Pickup"
         value={pickup}
-        placeholder="Times Square, Manhattan"
+        placeholder="Pickup location"
         onSelect={onPickupChange}
+        marker={<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent" />}
       />
 
       <SearchField
-        label="Dropoff"
         value={dropoff}
-        placeholder="JFK Airport, Queens"
+        placeholder="Where to?"
         onSelect={onDropoffChange}
+        marker={<span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-brand" />}
       />
 
       <button
         type="button"
         onClick={onCompare}
         disabled={!canCompare || isLoading}
-        className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-700"
+        className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
       >
-        {isLoading ? 'Comparing rides…' : 'Compare all rides'}
+        {isLoading ? 'Comparing rides…' : 'See prices'}
       </button>
     </div>
   );

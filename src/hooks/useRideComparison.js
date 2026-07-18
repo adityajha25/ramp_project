@@ -17,12 +17,12 @@ export function useRideComparison() {
   const compareRoute = useCallback(async () => {
     if (!pickup || !dropoff) {
       setError('Choose both a pickup and dropoff location.');
-      return;
+      return false;
     }
 
     if (!isWithinNYCServiceArea(pickup) || !isWithinNYCServiceArea(dropoff)) {
       setError('OneRide MVP is limited to NYC and surrounding areas.');
-      return;
+      return false;
     }
 
     setIsLoading(true);
@@ -31,9 +31,11 @@ export function useRideComparison() {
     try {
       const nextQuotes = await fetchRideQuotes({ pickup, dropoff });
       setQuotes(nextQuotes);
+      return true;
     } catch (compareError) {
       setQuotes([]);
       setError(compareError.message || 'Unable to compare rides right now.');
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -48,9 +50,11 @@ export function useRideComparison() {
     try {
       const nextQuotes = await fetchRideQuotes(route);
       setQuotes(nextQuotes);
+      return true;
     } catch (compareError) {
       setQuotes([]);
       setError(compareError.message || 'Unable to compare rides right now.');
+      return false;
     } finally {
       setIsLoading(false);
     }

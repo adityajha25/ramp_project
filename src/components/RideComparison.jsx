@@ -14,8 +14,8 @@ function SavingsBanner({ quotes, recommendedQuote }) {
   }
 
   return (
-    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
-      Potential savings up to {formatCurrency(savings)} vs {mostExpensive.providerName}.
+    <div className="rounded-xl border border-accent/40 bg-accent-light px-3 py-2 text-sm font-medium text-accent-dark">
+      Save up to {formatCurrency(savings)} vs {mostExpensive.providerName}.
     </div>
   );
 }
@@ -29,17 +29,19 @@ export default function RideComparison({
 }) {
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <p className="text-sm text-slate-400">Fetching ride estimates…</p>
+      <div className="space-y-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl border border-gray-200 bg-white" />
+        ))}
       </div>
     );
   }
 
   if (!pickup || !dropoff) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 p-4">
-        <p className="text-sm font-medium text-slate-300">Comparison dashboard</p>
-        <p className="mt-2 text-sm text-slate-500">
+      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-4">
+        <p className="text-sm font-medium text-gray-700">Comparison dashboard</p>
+        <p className="mt-2 text-sm text-gray-400">
           Set a pickup and dropoff to compare Uber, Lyft, Empower, and NYC taxi side by side.
         </p>
       </div>
@@ -48,24 +50,14 @@ export default function RideComparison({
 
   if (quotes.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <p className="text-sm text-slate-400">No quotes yet. Tap compare to load estimates.</p>
+      <div className="rounded-2xl border border-gray-200 bg-white p-4">
+        <p className="text-sm text-gray-500">No quotes yet. Tap refresh to load estimates.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <p className="text-sm font-medium text-slate-300">Recommended</p>
-        <p className="mt-1 text-lg font-semibold text-white">
-          {recommendedQuote.providerName}
-        </p>
-        <p className="text-sm text-slate-400">
-          {formatCurrency(recommendedQuote.priceLow)} – {formatCurrency(recommendedQuote.priceHigh)}
-        </p>
-      </div>
-
       <SavingsBanner quotes={quotes} recommendedQuote={recommendedQuote} />
 
       <div className="space-y-3">
@@ -80,7 +72,7 @@ export default function RideComparison({
         ))}
       </div>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-gray-400">
         Prices are boilerplate estimates. Live Uber, Lyft, Empower, and taxi APIs will replace
         these values in the next iteration.
       </p>

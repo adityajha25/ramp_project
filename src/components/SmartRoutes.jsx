@@ -20,7 +20,7 @@ function LiveHeadway({ minutes }) {
 function LegIcon({ leg }) {
   if (leg.mode === 'walk') {
     return (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-400 text-white">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-raised text-paper-dim">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-3.5 w-3.5">
           <circle cx="12" cy="5" r="2" />
           <path strokeLinecap="round" d="M12 7.5 10 13l-2.5 6M12 7.5l2 4 3 1.5" />
@@ -70,8 +70,8 @@ function LegRow({ leg }) {
     <li className="flex items-start gap-2.5">
       <span className="mt-0.5"><LegIcon leg={leg} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-ink">{description}</span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+        <span className="block truncate text-sm font-medium text-paper">{description}</span>
+        <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-paper-faint">
           <span>{formatDuration(leg.minutes)}</span>
           {leg.mode === 'subway' && leg.headwayMinutes ? (
             <>
@@ -157,6 +157,19 @@ function buildDetailedSteps(itinerary) {
   return steps;
 }
 
+function SplitPrice({ low, high }) {
+  const formatted = formatAveragePrice(low, high);
+  const whole = formatted.slice(0, -3);
+  const cents = formatted.slice(-3);
+
+  return (
+    <p className="shrink-0 font-display text-base font-semibold text-paper">
+      {whole}
+      <span className="text-sm font-normal text-paper-dim">{cents}</span>
+    </p>
+  );
+}
+
 function ItineraryCard({ itinerary, isSelected, onSelect }) {
   const [expanded, setExpanded] = useState(false);
   const steps = buildDetailedSteps(itinerary);
@@ -166,53 +179,51 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
 
   return (
     <article
-      className={`rounded-2xl border bg-white shadow-card transition ${
-        isSelected ? 'border-brand ring-2 ring-brand/30' : 'border-gray-200 hover:border-gray-300'
+      className={`rounded-2xl border transition-all duration-300 ease-expo ${
+        isSelected
+          ? 'border-signal/60 bg-surface shadow-glow'
+          : 'border-surface-hair bg-surface shadow-card hover:border-surface-hair-strong'
       }`}
     >
       <button type="button" onClick={onSelect} className="w-full p-4 text-left">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-ink">{itinerary.label}</h3>
+              <h3 className="font-display text-sm font-semibold text-paper">{itinerary.label}</h3>
               {showSavings ? (
-                <span className="rounded-full bg-accent-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-dark">
+                <span className="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-accent">
                   Save {formatCurrency(itinerary.savingsVsDirect)}
                 </span>
               ) : null}
               {isFaster ? (
-                <span className="rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-dark">
+                <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-brand">
                   Faster than driving
                 </span>
               ) : null}
             </div>
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 text-xs text-paper-faint">
               {formatDuration(itinerary.totalMinutes)}
-              {itinerary.departAt
-                ? ` · leave ${formatTime(itinerary.departAt)}`
-                : ''}
+              {itinerary.departAt ? ` · leave ${formatTime(itinerary.departAt)}` : ''}
               {itinerary.minutesVsDirect > 0
                 ? ` · +${Math.round(itinerary.minutesVsDirect)} min vs direct ride`
                 : ''}
             </p>
           </div>
-          <p className="shrink-0 text-base font-semibold text-ink">
-            {formatAveragePrice(itinerary.costLow, itinerary.costHigh)}
-          </p>
+          <SplitPrice low={itinerary.costLow} high={itinerary.costHigh} />
         </div>
 
-        <ul className="mt-3 space-y-2.5 border-t border-gray-100 pt-3">
+        <ul className="mt-3 divider-dashed space-y-2.5 border-t pt-3">
           {itinerary.legs.map((leg, index) => (
             <LegRow key={index} leg={leg} />
           ))}
         </ul>
       </button>
 
-      <div className="border-t border-gray-100 px-4 pb-3 pt-2">
+      <div className="divider-dashed border-t px-4 pb-3 pt-2">
         <button
           type="button"
           onClick={() => setExpanded((value) => !value)}
-          className="flex w-full items-center justify-between text-xs font-semibold text-gray-500 transition hover:text-brand"
+          className="flex w-full items-center justify-between text-xs font-semibold text-paper-faint transition hover:text-signal"
         >
           <span>{expanded ? 'Hide directions' : 'Step-by-step directions'}</span>
           <svg
@@ -220,7 +231,7 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
             fill="none"
             stroke="currentColor"
             strokeWidth="2.5"
-            className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            className={`h-3.5 w-3.5 transition-transform duration-300 ease-expo ${expanded ? 'rotate-180' : ''}`}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
@@ -230,11 +241,11 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
           <ol className="mt-3 space-y-3">
             {steps.map((step, index) => (
               <li key={index} className="flex items-start gap-2.5">
-                <span className="mt-0.5 w-12 shrink-0 text-right text-[11px] font-semibold tabular-nums text-gray-400">
+                <span className="mt-0.5 w-12 shrink-0 text-right text-[11px] font-semibold tabular-nums text-paper-faint">
                   {step.time ? formatTime(step.time) : ''}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-paper">
                     {step.providerId ? (
                       <ProviderLogo providerId={step.providerId} size={18} />
                     ) : step.segment ? (
@@ -253,10 +264,10 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
                     </span>
                   ) : null}
                   {step.paymentNote ? (
-                    <span className="mt-1 block text-xs text-gray-500">{step.paymentNote}</span>
+                    <span className="mt-1 block text-xs text-paper-faint">{step.paymentNote}</span>
                   ) : null}
                   {step.detail ? (
-                    <span className="mt-0.5 block text-xs text-gray-500">{step.detail}</span>
+                    <span className="mt-0.5 block text-xs text-paper-faint">{step.detail}</span>
                   ) : null}
                 </span>
               </li>
@@ -280,8 +291,8 @@ export default function SmartRoutes({ itineraries, isLoading, selectedId, onSele
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2 pt-1">
-        <h2 className="text-sm font-bold text-ink">Smart routes</h2>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+        <h2 className="font-display text-sm font-bold text-paper">Smart routes</h2>
+        <span className="rounded-full bg-surface-raised px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-paper-faint">
           Subway + rides
         </span>
       </div>
@@ -295,7 +306,7 @@ export default function SmartRoutes({ itineraries, isLoading, selectedId, onSele
         />
       ))}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-paper-faint">
         Tap a route to see it on the map. Headways update for current time of day.
       </p>
     </section>

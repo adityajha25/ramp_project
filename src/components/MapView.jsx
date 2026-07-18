@@ -35,7 +35,7 @@ function ensureColoredRouteLayers(map) {
     source: ROUTE_SOURCE_ID,
     filter: ['!=', ['get', 'dashed'], true],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': 0.85 },
+    paint: { 'line-color': '#F6F2E9', 'line-width': 9, 'line-opacity': 0.18 },
   });
 
   map.addLayer({
@@ -45,7 +45,7 @@ function ensureColoredRouteLayers(map) {
     filter: ['!=', ['get', 'dashed'], true],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': ['coalesce', ['get', 'color'], '#2563eb'],
+      'line-color': ['coalesce', ['get', 'color'], '#5B8CFF'],
       'line-width': 4.5,
       'line-opacity': 0.95,
     },
@@ -116,7 +116,7 @@ export default function MapView({
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/navigation-night-v1',
       center: [NYC_CENTER.lng, NYC_CENTER.lat],
       zoom: DEFAULT_MAP_ZOOM,
     });
@@ -179,8 +179,8 @@ export default function MapView({
         .addTo(map);
     };
 
-    renderMarker('pickup', pickup, '#2ec4a0');
-    renderMarker('dropoff', dropoff, '#2563eb');
+    renderMarker('pickup', pickup, '#2FE6A8');
+    renderMarker('dropoff', dropoff, '#5B8CFF');
 
     if (pickup && !dropoff) {
       map.flyTo({ center: [pickup.lng, pickup.lat], zoom: 13 });
@@ -215,12 +215,10 @@ export default function MapView({
   }, [routeGeoJson, pickup, dropoff]);
 
   return (
-    <div
-      className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-gray-200 shadow-card'}`}
-    >
+    <div className={`relative overflow-hidden ${className || 'min-h-[320px] flex-1 rounded-2xl border border-surface-hair shadow-card'}`}>
       <div ref={mapContainerRef} className="h-full min-h-[320px] w-full" />
 
-      <div className="glass pointer-events-none absolute left-3 top-3 rounded-xl px-3 py-2 text-xs text-gray-600">
+      <div className="glass pointer-events-none absolute left-3 top-3 rounded-xl px-3 py-2 font-mono text-[11px] text-paper-dim">
         Click the map to set pickup, then dropoff.
       </div>
     </div>

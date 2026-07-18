@@ -42,8 +42,8 @@ export default function TripTimingSelector({ timing, onChange, compact = false }
             onClick={() => handleModeChange(key)}
             className={`flex-1 rounded-full px-2 py-1.5 text-xs font-semibold transition ${
               mode === key
-                ? 'bg-ink text-white'
-                : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                ? 'bg-signal text-signal-ink shadow-glow-sm'
+                : 'border border-surface-hair bg-surface/50 text-paper-dim hover:border-signal/50 hover:text-signal'
             }`}
           >
             {label}
@@ -56,18 +56,18 @@ export default function TripTimingSelector({ timing, onChange, compact = false }
           type="datetime-local"
           value={datetimeLocalValue}
           onChange={handleDatetimeChange}
-          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+          className="w-full rounded-xl border border-surface-hair bg-surface/60 px-3 py-2 text-sm text-paper outline-none focus:border-signal/50 focus:bg-surface focus:ring-2 focus:ring-signal/30"
         />
       ) : (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-paper-faint">
           Departing now · estimates use current traffic &amp; train headways
         </p>
       )}
 
       {mode !== TRIP_TIMING_MODES.leaveNow && datetime ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-paper-faint">
           {mode === TRIP_TIMING_MODES.arriveBy ? 'Arrive by' : 'Leave at'}{' '}
-          <span className="font-semibold text-ink">{formatTime(datetime)}</span>
+          <span className="font-semibold text-paper">{formatTime(datetime)}</span>
         </p>
       ) : null}
     </div>

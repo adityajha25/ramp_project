@@ -11,26 +11,26 @@ import { buildDirectRideGeoJson, buildItineraryGeoJson } from '../services/route
 
 function TripSummary({ pickup, dropoff }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-card">
+    <div className="surface-card rounded-2xl p-4">
       <div className="flex gap-3">
         <div className="flex flex-col items-center pt-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-          <span className="my-1 w-px flex-1 bg-gray-300" />
-          <span className="h-2.5 w-2.5 rounded-sm bg-brand" />
+          <span className="h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_0_3px_rgba(47,230,168,0.15)]" />
+          <span className="my-1 w-px flex-1 divider-dashed border-l" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-brand shadow-[0_0_0_3px_rgba(91,140,255,0.15)]" />
         </div>
         <div className="min-w-0 flex-1 space-y-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Pickup</p>
-            <p className="truncate text-sm font-medium text-ink">{pickup?.label || '—'}</p>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-paper-faint">Pickup</p>
+            <p className="truncate text-sm font-medium text-paper">{pickup?.label || '—'}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Dropoff</p>
-            <p className="truncate text-sm font-medium text-ink">{dropoff?.label || '—'}</p>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-paper-faint">Dropoff</p>
+            <p className="truncate text-sm font-medium text-paper">{dropoff?.label || '—'}</p>
           </div>
         </div>
         <Link
           to="/"
-          className="self-center rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:border-brand hover:text-brand"
+          className="self-center rounded-full border border-surface-hair px-3 py-1.5 text-xs font-semibold text-paper-dim transition hover:border-signal/50 hover:text-signal"
         >
           Edit
         </Link>
@@ -119,7 +119,7 @@ export default function RidePage({ ride }) {
 
       if (mapFocus.type === 'provider') {
         const quote = quotes.find((item) => item.providerId === mapFocus.id);
-        geoJson = await buildDirectRideGeoJson(pickup, dropoff, quote?.brandColor ?? '#0f172a');
+        geoJson = await buildDirectRideGeoJson(pickup, dropoff, quote?.brandColor ?? '#f6f2e9');
       } else {
         const itinerary = smartRoutes.find((item) => item.id === mapFocus.id);
         if (itinerary) {
@@ -178,23 +178,25 @@ export default function RidePage({ ride }) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
-      <div className="z-20 flex items-center gap-3 border-b border-white/50 bg-white/70 px-4 py-3 backdrop-blur-xl">
+    <div className="flex h-screen flex-col bg-canvas">
+      <div className="z-20 flex items-center gap-3 border-b border-surface-hair bg-canvas/80 px-4 py-3 backdrop-blur-xl">
         <button
           type="button"
           onClick={() => navigate('/')}
           aria-label="Back to home"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-brand hover:text-brand"
+          className="press flex h-9 w-9 items-center justify-center rounded-full border border-surface-hair text-paper-dim transition hover:border-signal/50 hover:text-signal"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <span className="text-lg font-extrabold tracking-tight">
+        <span className="text-wordmark text-lg text-paper">
           <span className="text-brand">One</span>
           <span className="text-accent">Ride</span>
         </span>
-        <span className="ml-auto text-sm font-medium text-gray-500">Choose your ride</span>
+        <span className="ml-auto font-mono text-xs font-medium uppercase tracking-wide text-paper-faint">
+          Choose your ride
+        </span>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -209,12 +211,12 @@ export default function RidePage({ ride }) {
           />
         </div>
 
-        <aside className="relative flex min-h-0 flex-1 flex-col border-t border-gray-200 bg-gray-50 lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
+        <aside className="relative flex min-h-0 flex-1 flex-col border-t border-surface-hair bg-canvas lg:order-1 lg:w-[400px] lg:flex-none lg:border-r lg:border-t-0">
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pb-24">
             <TripSummary pickup={pickup} dropoff={dropoff} />
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-card">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            <div className="rounded-2xl border border-surface-hair bg-surface p-3 shadow-card">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-paper-faint">
                 When
               </p>
               <TripTimingSelector
@@ -225,11 +227,11 @@ export default function RidePage({ ride }) {
             </div>
 
             {agentMeta ? (
-              <div className="rounded-2xl border border-brand/20 bg-brand-light/50 px-3 py-2.5 text-xs text-brand-dark">
-                <p className="font-semibold text-ink">From your request</p>
-                <p className="mt-0.5 text-gray-600">“{agentMeta.prompt}”</p>
+              <div className="rounded-2xl border border-signal/25 bg-signal/10 px-3 py-2.5 text-xs text-paper-dim">
+                <p className="font-semibold text-paper">From your request</p>
+                <p className="mt-0.5">&ldquo;{agentMeta.prompt}&rdquo;</p>
                 {agentMeta.arriveBy ? (
-                  <p className="mt-1 text-gray-600">
+                  <p className="mt-1">
                     Arrive by{' '}
                     {new Date(agentMeta.arriveBy).toLocaleTimeString([], {
                       hour: 'numeric',
@@ -241,7 +243,7 @@ export default function RidePage({ ride }) {
                   </p>
                 ) : null}
                 {agentMeta.source === 'heuristic' ? (
-                  <p className="mt-1 text-amber-800">Parsed offline — OpenAI was unavailable.</p>
+                  <p className="mt-1 text-[#ffcc4d]">Parsed offline — OpenAI was unavailable.</p>
                 ) : null}
               </div>
             ) : null}
@@ -252,10 +254,10 @@ export default function RidePage({ ride }) {
                   key={mode}
                   type="button"
                   onClick={() => setSortMode(mode)}
-                  className={`flex-1 rounded-full px-3 py-2 text-xs font-semibold transition ${
+                  className={`flex-1 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-300 ease-expo ${
                     sortMode === mode
-                      ? 'bg-ink text-white'
-                      : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      ? 'bg-signal text-signal-ink shadow-glow-sm'
+                      : 'border border-surface-hair bg-surface/50 text-paper-dim hover:border-surface-hair-strong'
                   }`}
                 >
                   {label}
@@ -268,18 +270,18 @@ export default function RidePage({ ride }) {
               onClick={() => setHasOwnCar(!hasOwnCar)}
               className={`flex items-center justify-between rounded-2xl border px-4 py-2.5 text-sm font-medium transition ${
                 hasOwnCar
-                  ? 'border-brand bg-brand-light/40 text-brand-dark'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  ? 'border-accent/40 bg-accent/10 text-accent'
+                  : 'border-surface-hair bg-surface/50 text-paper-dim hover:border-surface-hair-strong'
               }`}
             >
               <span>I have my own car</span>
               <span
-                className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${
-                  hasOwnCar ? 'bg-brand' : 'bg-gray-300'
+                className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-colors duration-300 ${
+                  hasOwnCar ? 'bg-accent' : 'bg-surface-raised'
                 }`}
               >
                 <span
-                  className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                  className={`h-4 w-4 rounded-full bg-paper shadow transition-transform duration-300 ease-spring ${
                     hasOwnCar ? 'translate-x-4' : ''
                   }`}
                 />
@@ -287,7 +289,7 @@ export default function RidePage({ ride }) {
             </button>
 
             {error ? (
-              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-xl border border-danger/40 bg-danger-light px-3 py-2 text-sm text-danger">
                 {error}
               </p>
             ) : null}
@@ -315,18 +317,18 @@ export default function RidePage({ ride }) {
               type="button"
               onClick={compareRoute}
               disabled={isLoading}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:border-brand hover:text-brand disabled:opacity-50"
+              className="rounded-xl border border-surface-hair bg-surface/50 px-4 py-2.5 text-sm font-semibold text-paper-dim transition hover:border-signal/40 hover:text-signal disabled:opacity-50"
             >
               {isLoading ? 'Refreshing…' : 'Refresh estimates'}
             </button>
           </div>
 
           {selectedQuote && !isLoading ? (
-            <div className="glass-strong absolute bottom-0 left-0 right-0 z-10 border-x-0 border-b-0 p-4">
+            <div className="glass-strong absolute bottom-0 left-0 right-0 z-10 animate-rise-in border-x-0 border-b-0 p-4">
               <button
                 type="button"
                 onClick={handleBook}
-                className="w-full rounded-xl bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark"
+                className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-[#ff8a5c]"
               >
                 {isOwnCarSelected
                   ? `Get directions · ${formatAveragePrice(selectedQuote.priceLow, selectedQuote.priceHigh)} est.`

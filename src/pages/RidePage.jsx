@@ -351,6 +351,8 @@ export default function RidePage({ ride }) {
                   isLoading={isLoading}
                   selectedId={mapFocus?.type === 'itinerary' ? mapFocus.id : null}
                   onSelect={handleSelectItinerary}
+                  pickup={pickup}
+                  dropoff={dropoff}
                 />
 
                 <button
@@ -369,7 +371,7 @@ export default function RidePage({ ride }) {
                     <button
                       type="button"
                       onClick={handleStartItinerary}
-                      className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-[#ff8a5c]"
+                      className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-signal-dark"
                     >
                       Start trip · {focusedItinerary.label} ·{' '}
                       <span className="font-sans tabular-nums">
@@ -380,7 +382,7 @@ export default function RidePage({ ride }) {
                     <button
                       type="button"
                       onClick={handleBook}
-                      className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-[#ff8a5c]"
+                      className="press w-full rounded-xl bg-signal px-4 py-3.5 text-sm font-semibold text-signal-ink shadow-glow transition hover:bg-signal-dark"
                     >
                       {isOwnCarSelected ? (
                         <>

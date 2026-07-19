@@ -2,10 +2,15 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { NYC_CENTER, DEFAULT_MAP_ZOOM } from '../constants/nyc.js';
 import { reverseGeocode } from '../services/geocoding.js';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const ROUTE_SOURCE_ID = 'trip-route';
 const EMPTY_ROUTE = { type: 'FeatureCollection', features: [] };
+const MAP_STYLES = {
+  light: 'mapbox://styles/mapbox/light-v11',
+  dark: 'mapbox://styles/mapbox/navigation-night-v1',
+};
 
 function removeLegacyRouteLayers(map) {
   ['trip-route-line', 'trip-route-casing', 'trip-route-solid', 'trip-route-dashed'].forEach((id) => {
@@ -19,7 +24,7 @@ function removeLegacyRouteLayers(map) {
 }
 
 /** Multi-color route layers: solid lines use feature `color`, walks use dashed gray. */
-function ensureColoredRouteLayers(map) {
+function ensureColoredRouteLayers(map, isDark) {
   if (map.getSource(ROUTE_SOURCE_ID)) {
     return;
   }
@@ -35,7 +40,11 @@ function ensureColoredRouteLayers(map) {
     source: ROUTE_SOURCE_ID,
     filter: ['!=', ['get', 'dashed'], true],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#F6F2E9', 'line-width': 9, 'line-opacity': 0.18 },
+    paint: {
+      'line-color': isDark ? '#F6F2E9' : '#ffffff',
+      'line-width': 9,
+      'line-opacity': isDark ? 0.18 : 0.85,
+    },
   });
 
   map.addLayer({
@@ -65,9 +74,9 @@ function ensureColoredRouteLayers(map) {
   });
 }
 
-function setRouteData(map, geoJson) {
+function setRouteData(map, geoJson, isDark) {
   removeLegacyRouteLayers(map);
-  ensureColoredRouteLayers(map);
+  ensureColoredRouteLayers(map, isDark);
   map.getSource(ROUTE_SOURCE_ID).setData(geoJson ?? EMPTY_ROUTE);
 }
 
@@ -128,6 +137,7 @@ export default function MapView({
   vehicle,
   className,
 }) {
+  const { isDark } = useTheme();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef({ pickup: null, dropoff: null });
@@ -135,6 +145,7 @@ export default function MapView({
   const vehicleMarkerRef = useRef(null);
   const vehicleKindRef = useRef(null);
   const lastFollowRef = useRef(0);
+  const mapThemeRef = useRef(isDark);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -145,7 +156,7 @@ export default function MapView({
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/navigation-night-v1',
+      style: MAP_STYLES[isDark ? 'dark' : 'light'],
       center: [NYC_CENTER.lng, NYC_CENTER.lat],
       zoom: DEFAULT_MAP_ZOOM,
     });
@@ -153,7 +164,7 @@ export default function MapView({
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'top-right');
 
     map.on('load', () => {
-      ensureColoredRouteLayers(map);
+      ensureColoredRouteLayers(map, isDark);
     });
 
     map.on('click', async (event) => {
@@ -175,6 +186,7 @@ export default function MapView({
     });
 
     mapRef.current = map;
+    mapThemeRef.current = isDark;
 
     return () => {
       map.remove();
@@ -228,7 +240,7 @@ export default function MapView({
     }
 
     const apply = () => {
-      setRouteData(map, routeGeoJson);
+      setRouteData(map, routeGeoJson, isDark);
       fitRouteBounds(map, routeGeoJson, pickup, dropoff);
     };
 
@@ -241,7 +253,28 @@ export default function MapView({
     return () => {
       map.off('load', apply);
     };
-  }, [routeGeoJson, pickup, dropoff]);
+  }, [routeGeoJson, pickup, dropoff, isDark]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapThemeRef.current === isDark) {
+      return undefined;
+    }
+
+    mapThemeRef.current = isDark;
+    const style = MAP_STYLES[isDark ? 'dark' : 'light'];
+
+    const apply = () => {
+      setRouteData(map, routeGeoJson, isDark);
+    };
+
+    map.setStyle(style);
+    map.once('style.load', apply);
+
+    return () => {
+      map.off('style.load', apply);
+    };
+  }, [isDark, routeGeoJson]);
 
   // Simulated vehicle marker: animated car (or walking/subway dot) that
   // follows the trip. Recreated when the transport mode changes.

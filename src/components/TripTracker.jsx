@@ -125,7 +125,7 @@ export default function TripTracker({ trip, fareLabel, onCancel, onDone }) {
         <button
           type="button"
           onClick={onDone}
-          className="press w-full rounded-xl bg-signal px-4 py-3 text-sm font-semibold text-signal-ink shadow-glow-sm transition hover:bg-[#ff8a5c]"
+          className="press w-full rounded-xl bg-signal px-4 py-3 text-sm font-semibold text-signal-ink shadow-glow-sm transition hover:bg-signal-dark"
         >
           Done
         </button>

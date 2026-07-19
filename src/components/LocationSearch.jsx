@@ -171,7 +171,7 @@ export default function LocationSearch({
         type="button"
         onClick={onCompare}
         disabled={!canCompare || isLoading}
-        className="press w-full rounded-xl bg-signal px-4 py-3 text-sm font-semibold text-signal-ink shadow-glow-sm transition hover:bg-[#ff8a5c] disabled:cursor-not-allowed disabled:bg-surface disabled:text-paper-faint disabled:shadow-none"
+        className="press w-full rounded-xl bg-signal px-4 py-3 text-sm font-semibold text-signal-ink shadow-glow-sm transition hover:bg-signal-dark disabled:cursor-not-allowed disabled:bg-surface disabled:text-paper-faint disabled:shadow-none"
       >
         {isLoading ? 'Comparing rides…' : 'See prices'}
       </button>

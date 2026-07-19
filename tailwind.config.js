@@ -1,46 +1,43 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Night canvas — cool ink scale used for backgrounds/surfaces.
-        void: '#07080C',
-        canvas: '#0B0D14',
+        void: 'rgb(var(--void) / <alpha-value>)',
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
         surface: {
-          DEFAULT: '#141826',
-          raised: '#1B2032',
-          hair: 'rgba(247,243,234,0.09)',
-          'hair-strong': 'rgba(247,243,234,0.18)',
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+          hair: 'var(--surface-hair)',
+          'hair-strong': 'var(--surface-hair-strong)',
         },
-        // Warm paper scale — used for text on the dark canvas.
         paper: {
-          DEFAULT: '#F6F2E9',
-          dim: '#ACA695',
-          faint: '#6E695C',
+          DEFAULT: 'rgb(var(--paper) / <alpha-value>)',
+          dim: 'rgb(var(--paper-dim) / <alpha-value>)',
+          faint: 'rgb(var(--paper-faint) / <alpha-value>)',
         },
-        // "One" — elevated cobalt. Wordmark + pickup/dropoff wayfinding.
+        ink: 'rgb(var(--paper) / <alpha-value>)',
         brand: {
-          DEFAULT: '#5B8CFF',
-          dark: '#3D67E0',
-          light: '#26305A',
+          DEFAULT: 'rgb(var(--brand) / <alpha-value>)',
+          dark: 'rgb(var(--brand-dark) / <alpha-value>)',
+          light: 'rgb(var(--brand-light) / <alpha-value>)',
         },
-        // "Ride" — elevated jade. Wordmark + success states.
         accent: {
-          DEFAULT: '#2FE6A8',
-          dark: '#17C48D',
-          light: '#193B34',
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          dark: 'rgb(var(--accent-dark) / <alpha-value>)',
+          light: 'rgb(var(--accent-light) / <alpha-value>)',
         },
-        // Meter signal — the one warm, high-energy color. Primary CTA only.
         signal: {
-          DEFAULT: '#FF7A45',
-          dark: '#E85D2A',
-          light: '#4A2A1B',
-          ink: '#1B1006',
+          DEFAULT: 'rgb(var(--signal) / <alpha-value>)',
+          dark: 'rgb(var(--signal-dark) / <alpha-value>)',
+          light: 'rgb(var(--signal-light) / <alpha-value>)',
+          ink: 'rgb(var(--signal-ink) / <alpha-value>)',
         },
         danger: {
-          DEFAULT: '#FF5C6C',
-          light: '#3A1620',
+          DEFAULT: 'rgb(var(--danger) / <alpha-value>)',
+          light: 'rgb(var(--danger-light) / <alpha-value>)',
         },
       },
       fontFamily: {
@@ -49,11 +46,11 @@ export default {
         mono: ['"Space Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(0,0,0,0.35), 0 16px 40px -12px rgba(0,0,0,0.6)',
-        lift: '0 2px 4px rgba(0,0,0,0.4), 0 24px 48px -16px rgba(0,0,0,0.65)',
-        glow: '0 0 0 1px rgba(255,122,69,0.45), 0 8px 28px -4px rgba(255,122,69,0.4)',
-        'glow-sm': '0 0 0 1px rgba(255,122,69,0.35), 0 4px 14px -2px rgba(255,122,69,0.35)',
-        hairline: 'inset 0 1px 0 rgba(247,243,234,0.08)',
+        card: 'var(--shadow-card)',
+        lift: 'var(--shadow-lift)',
+        glow: 'var(--shadow-glow)',
+        'glow-sm': 'var(--shadow-glow-sm)',
+        hairline: 'var(--shadow-hairline)',
       },
       transitionTimingFunction: {
         spring: 'cubic-bezier(.34,1.56,.64,1)',

@@ -178,18 +178,27 @@ export function buildSmartItineraries({ pickup, dropoff, directQuotes, departAt 
       return { ...itinerary, savingsVsDirect, minutesVsDirect };
     })
     .filter((itinerary) => {
-      if (!cheapestDirect) {
+      if (!cheapestDirect || !fastestDirect) {
         return true;
       }
 
-      // Keep it if it saves real money without being absurdly slow, or beats
-      // the fastest private option outright.
-      const savesMoney =
-        itinerary.savingsVsDirect >= 3 &&
-        itinerary.totalMinutes <= fastestDirect.etaMinutes * 2.2;
+      const savesMoney = itinerary.savingsVsDirect >= 2;
       const savesTime = itinerary.minutesVsDirect < 0;
+      const bigSavings = itinerary.savingsVsDirect >= 10;
 
-      return savesMoney || savesTime;
+      // Pure subway: show whenever it beats door-to-door price or time.
+      if (itinerary.type === 'transit') {
+        return savesMoney || savesTime || itinerary.savingsVsDirect >= 0;
+      }
+
+      // Hybrid: allow longer trips when they save real money (e.g. JFK via AirTrain).
+      const maxMinutes = Math.max(fastestDirect.etaMinutes * 3, fastestDirect.etaMinutes + 50);
+
+      return (
+        savesTime ||
+        (savesMoney && itinerary.totalMinutes <= maxMinutes) ||
+        (bigSavings && itinerary.totalMinutes <= fastestDirect.etaMinutes * 4)
+      );
     });
 
   // Prefer cheaper-and-reasonable first; keep the list short and varied.

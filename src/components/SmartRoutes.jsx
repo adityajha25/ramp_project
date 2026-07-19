@@ -279,12 +279,10 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
   );
 }
 
-export default function SmartRoutes({ itineraries, isLoading, selectedId, onSelect }) {
-  if (isLoading) {
-    return null;
-  }
+export default function SmartRoutes({ itineraries, isLoading, selectedId, onSelect, pickup, dropoff }) {
+  const hasTrip = Boolean(pickup && dropoff);
 
-  if (!itineraries || itineraries.length === 0) {
+  if (!hasTrip) {
     return null;
   }
 
@@ -297,18 +295,35 @@ export default function SmartRoutes({ itineraries, isLoading, selectedId, onSele
         </span>
       </div>
 
-      {itineraries.map((itinerary) => (
-        <ItineraryCard
-          key={itinerary.id}
-          itinerary={itinerary}
-          isSelected={itinerary.id === selectedId}
-          onSelect={() => onSelect(itinerary)}
-        />
-      ))}
+      {isLoading ? (
+        <div className="space-y-3">
+          <div className="skeleton h-28" />
+          <div className="skeleton h-28" />
+        </div>
+      ) : !itineraries || itineraries.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-surface-hair-strong bg-surface/40 p-4">
+          <p className="text-sm font-medium text-paper">No public transit routes yet</p>
+          <p className="mt-1 text-xs text-paper-faint">
+            Try a trip of at least one mile with subway stations nearby, or refresh estimates after
+            setting pickup and dropoff.
+          </p>
+        </div>
+      ) : (
+        <>
+          {itineraries.map((itinerary) => (
+            <ItineraryCard
+              key={itinerary.id}
+              itinerary={itinerary}
+              isSelected={itinerary.id === selectedId}
+              onSelect={() => onSelect(itinerary)}
+            />
+          ))}
 
-      <p className="text-xs text-paper-faint">
-        Tap a route to see it on the map. Headways update for current time of day.
-      </p>
+          <p className="text-xs text-paper-faint">
+            Tap a route to see it on the map. Headways update for current time of day.
+          </p>
+        </>
+      )}
     </section>
   );
 }

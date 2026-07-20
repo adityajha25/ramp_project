@@ -6,8 +6,8 @@ import { distanceInMiles } from '../utils/formatters.js';
 /**
  * Hybrid itinerary composer (Phase 1).
  *
- * Combines subway with walking and first/last-mile rideshare legs, then keeps
- * only itineraries that beat the direct private ride on cost or time.
+ * Combines subway with walking and first/last-mile rideshare legs, ranked
+ * cheapest-first; savings vs the direct ride are annotated for display.
  */
 
 const WALK_MPH = 3;
@@ -178,27 +178,14 @@ export function buildSmartItineraries({ pickup, dropoff, directQuotes, departAt 
       return { ...itinerary, savingsVsDirect, minutesVsDirect };
     })
     .filter((itinerary) => {
-      if (!cheapestDirect || !fastestDirect) {
+      if (!fastestDirect) {
         return true;
       }
 
-      const savesMoney = itinerary.savingsVsDirect >= 2;
-      const savesTime = itinerary.minutesVsDirect < 0;
-      const bigSavings = itinerary.savingsVsDirect >= 10;
-
-      // Pure subway: show whenever it beats door-to-door price or time.
-      if (itinerary.type === 'transit') {
-        return savesMoney || savesTime || itinerary.savingsVsDirect >= 0;
-      }
-
-      // Hybrid: allow longer trips when they save real money (e.g. JFK via AirTrain).
-      const maxMinutes = Math.max(fastestDirect.etaMinutes * 3, fastestDirect.etaMinutes + 50);
-
-      return (
-        savesTime ||
-        (savesMoney && itinerary.totalMinutes <= maxMinutes) ||
-        (bigSavings && itinerary.totalMinutes <= fastestDirect.etaMinutes * 4)
-      );
+      // Sanity gate only: hide absurdly slow itineraries. Viable transit is
+      // always shown, even when it doesn't beat the direct ride on price.
+      const maxMinutes = Math.max(fastestDirect.etaMinutes * 4, fastestDirect.etaMinutes + 75);
+      return itinerary.totalMinutes <= maxMinutes;
     });
 
   // Prefer cheaper-and-reasonable first; keep the list short and varied.

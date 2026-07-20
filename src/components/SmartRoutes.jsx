@@ -207,6 +207,9 @@ function ItineraryCard({ itinerary, isSelected, onSelect }) {
               {itinerary.minutesVsDirect > 0
                 ? ` · +${Math.round(itinerary.minutesVsDirect)} min vs direct ride`
                 : ''}
+              {itinerary.savingsVsDirect <= -1
+                ? ` · +${formatCurrency(Math.abs(itinerary.savingsVsDirect))} vs direct ride`
+                : ''}
             </p>
           </div>
           <SplitPrice low={itinerary.costLow} high={itinerary.costHigh} />

@@ -54,6 +54,7 @@ export function useRideComparison() {
 
     const providerQuotes = quotes.filter((quote) => quote.providerId !== PERSONAL_CAR.id);
     if (providerQuotes.length === 0) {
+      setSmartRoutes([]);
       return;
     }
 
